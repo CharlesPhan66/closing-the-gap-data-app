@@ -8,6 +8,7 @@ drop table if exists Sex;
 drop table if exists HealthCondition;
 drop table if exists SchoolCompletion;
 drop table if exists Population;
+drop table if exists IndigenousStatus;
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE Members (
@@ -61,16 +62,22 @@ CREATE TABLE Population (
     year         INTEGER NOT NULL,
     stateID      INTEGER NOT NULL,
     sexID        INTEGER NOT NULL,
+    statusID     INTEGER NOT NULL,
     completionID INTEGER NOT NULL,
     ageID        INTEGER NOT NULL,
-    outcomeID    INTEGER NOT NULL,
+    outcomeID    INTEGER         ,
     conditionID  INTEGER NOT NULL,
     population   INTEGER NOT NULL,
-    PRIMARY KEY (year, stateID, sexID, completionID, ageID, outcomeID, conditionID),
+    PRIMARY KEY (year, stateID, sexID, completionID, ageID, statusID, conditionID),
+    FOREIGN KEY (statusID)     REFERENCES IndigenousStatus(statusID),
     FOREIGN KEY (stateID)      REFERENCES States(stateID),
     FOREIGN KEY (sexID)        REFERENCES Sex(sexID),
     FOREIGN KEY (completionID) REFERENCES SchoolCompletion(completionID),
     FOREIGN KEY (ageID)        REFERENCES AgeGroup(ageID),
     FOREIGN KEY (outcomeID)    REFERENCES Outcomes(outcomeID),
     FOREIGN KEY (conditionID)  REFERENCES HealthCondition(conditionID)
+);
+CREATE TABLE IndigenousStatus (
+    statusID INTEGER PRIMARY KEY,
+    status   TEXT NOT NULL  -- 'indig', 'non_indig', 'not_stated'
 );
