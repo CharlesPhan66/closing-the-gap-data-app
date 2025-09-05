@@ -18,6 +18,7 @@ CREATE TABLE Members (
 CREATE TABLE Persona (
     id                INTEGER PRIMARY KEY,
     quote             TEXT               ,
+    background        TEXT               ,
     needs_goals       TEXT               ,
     pain_points       TEXT               ,
     skills_experience TEXT
