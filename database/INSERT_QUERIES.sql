@@ -186,3 +186,23 @@ INSERT INTO Priorities (priorityID, description) VALUES
 (3, 'Transforming Government Organizations'),
 (4, 'Shared Access to Data and Information at a Regional Level');
 
+UPDATE LGA
+SET 
+    area_sqkm = (SELECT t.area_sqkm FROM LGA_tmp t WHERE t.lgaCode = LGA.lgaCode),
+    latitude  = (SELECT t.latitude  FROM LGA_tmp t WHERE t.lgaCode = LGA.lgaCode),
+    longitude = (SELECT t.longitude FROM LGA_tmp t WHERE t.lgaCode = LGA.lgaCode)
+WHERE year = 2021
+  AND EXISTS (SELECT 1 FROM LGA_tmp t WHERE t.lgaCode = LGA.lgaCode);
+  
+INSERT INTO LGAtype (typeID, description) VALUES
+('C',    'City'),
+('A',    'Area'),
+('RC',   'Rural City'),
+('B',    'Borough'),
+('S',    'Shire'),
+('T',    'Town'),
+('R',    'Regional Council'),
+('M',    'Municipality / Municipal Council'),
+('DC',   'District Council'),
+('RegC', 'Regional Council (South Australia)'),
+('AC',   'Aboriginal Council');

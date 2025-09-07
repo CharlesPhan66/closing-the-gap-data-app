@@ -15,7 +15,25 @@ drop table if exists Education;
 drop table if exists NonSchoolEdu;
 drop table if exists Outcomes;
 drop table if exists Priorities;
+drop table if exists LGAtype;
 PRAGMA foreign_keys = ON;
+
+ALTER TABLE LGA
+ADD COLUMN typeID TEXT REFERENCES LGAtype(typeID);
+
+CREATE TABLE LGAtype (
+    typeID      TEXT PRIMARY KEY,
+    description TEXT NOT NULL
+);
+
+ALTER TABLE LGA
+ADD COLUMN area_sqkm REAL;
+
+ALTER TABLE LGA
+ADD COLUMN latitude REAL;
+
+ALTER TABLE LGA
+ADD COLUMN longitude REAL;
 
 CREATE TABLE Priorities (
     priorityID  INTEGER PRIMARY KEY,
@@ -161,6 +179,14 @@ CREATE TABLE LGA_tmp21 (
     LGA_NAME21 TEXT
 );
 
+CREATE TABLE LGA_tmp (
+    lgaCode   TEXT,
+    name      TEXT,
+    type      TEXT,
+    area_sqkm REAL,
+    latitude  REAL,
+    longitude REAL
+);
 
 CREATE TABLE Education_TEST (
     eduID           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -274,3 +300,4 @@ drop table Health_TEST;
 drop table Health_TEST_tmp;
 drop table NonSchoolEdu_TEST;
 drop table NonSchoolEdu_TEST_tmp;
+drop table LGA_tmp;
