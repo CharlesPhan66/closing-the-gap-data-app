@@ -104,3 +104,85 @@ INSERT INTO Members (sID, name) VALUES ('s4066942','Nguyen Cong Quoc Dat');
 INSERT INTO Members (sID, name) VALUES ('s4042625','Trinh Ngoc Tieu Long');
 INSERT INTO Members (sID, name) VALUES ('s4119755','Nguy Cao Tri');
 
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(1, 'Everyone enjoys long and healthy lives',
+ 'Close the Gap in life expectancy within a generation, by 2031');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(2, 'Children are born healthy and strong',
+ 'By 2031, increase the proportion of Aboriginal and Torres Strait Islander babies with a healthy birthweight to 91 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(3, 'Children are engaged in high quality, culturally appropriate early childhood education in their early years',
+ 'By 2025, increase the proportion of Aboriginal and Torres Strait Islander children enrolled in Year Before Fulltime Schooling (YBFS) early childhood education to 95 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(4, 'Children thrive in their early years',
+ 'By 2031, increase the proportion of Aboriginal and Torres Strait Islander children assessed as developmentally on track in all five domains of the Australian Early Development Census (AEDC) to 55 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(5, 'Students achieve their full learning potential',
+ 'By 2031, increase the proportion of Aboriginal and Torres Strait Islander people (age 20-24) attaining year 12 or equivalent qualification to 96 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(6, 'Students reach their full potential through further education pathways',
+ 'By 2031, increase the proportion of Aboriginal and Torres Strait Islander people aged 25-34 years who have completed a tertiary qualification (Certificate III and above) to 70 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(7, 'Youth are engaged in employment or education',
+ 'By 2031, increase the proportion of Aboriginal and Torres Strait Islander youth (15-24 years) who are in employment, education or training to 67 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(8, 'Strong economic participation and development of people and their communities',
+ 'By 2031, increase the proportion of Aboriginal and Torres Strait Islander people aged 25-64 who are employed to 62 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(9, 'People can secure appropriate, affordable housing that is aligned with their priorities and need',
+ '9a: By 2031, increase the proportion of Aboriginal and Torres Strait Islander people living in appropriately sized (not overcrowded) housing to 88 per cent.\n\n9b: By 2031, all Aboriginal and Torres Strait Islander households:\n- within discrete Aboriginal and Torres Strait Islander communities receive essential services that meet or exceed the relevant jurisdictional standard\n- in or near to a town receive essential services that meet or exceed the same standard as applies generally within the town (including if the household might be classified for other purposes as a part of a discrete settlement such as a “town camp” or “town based reserve”))');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(10, 'Adults are not overrepresented in the criminal justice system',
+ 'By 2031, reduce the rate of Aboriginal and Torres Strait Islander adults held in incarceration by at least 15 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(11, 'Young people are not overrepresented in the criminal justice system',
+ 'By 2031, reduce the rate of Aboriginal and Torres Strait Islander young people (10-17 years) in detention by at least 30 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(12, 'Children are not overrepresented in the child protection system',
+ 'By 2031, reduce the rate of over-representation of Aboriginal and Torres Strait Islander children in out-of-home care by 45 per cent');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(13, 'Families and households are safe',
+ 'By 2031, the rate of all forms of family violence and abuse against Aboriginal and Torres Strait Islander women and children is reduced at least by 50%, as progress towards zero');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(14, 'People enjoy high levels of social and emotional wellbeing',
+ 'Significant and sustained reduction in suicide of Aboriginal and Torres Strait Islander people towards zero');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(15, 'People maintain a distinctive cultural, spiritual, physical and economic relationship with their land and waters',
+ '15a: By 2030, a 15 per cent increase in Australia’s landmass subject to Aboriginal and Torres Strait Islander people’s legal rights or interests.\n\n15b: By 2030, a 15 per cent increase in areas covered by Aboriginal and Torres Strait Islander people’s legal rights or interests in the sea');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(16, 'Cultures and languages are strong, supported and flourishing',
+ 'By 2031, there is a sustained increase in number and strength of Aboriginal and Torres Strait Islander languages being spoken');
+
+INSERT INTO Outcomes (outcomeID, outcome, target) VALUES
+(17, 'People have access to information and services enabling participation in informed decision-making regarding their own lives',
+ 'By 2026, Aboriginal and Torres Strait Islander people have equal levels of digital inclusion');
+ 
+UPDATE Outcomes
+SET outcome = 'People can secure appropriate, affordable housing that is aligned with their priorities and need'
+WHERE outcomeID = 9;
+
+UPDATE Outcomes
+SET target = 'By 2030, a 15 per cent increase in Australia’s landmass subject to Aboriginal and Torres Strait Islander people’s legal rights or interests. By 2030, a 15 per cent increase in areas covered by Aboriginal and Torres Strait Islander people’s legal rights or interests in the sea.'
+WHERE outcomeID = 15;
+
+INSERT INTO Priorities (priorityID, description) VALUES
+(1, 'Formal Partnerships and Shared Decision Making'),
+(2, 'Building the Community-Controlled Sector'),
+(3, 'Transforming Government Organizations'),
+(4, 'Shared Access to Data and Information at a Regional Level');
+

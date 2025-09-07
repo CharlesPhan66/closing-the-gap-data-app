@@ -13,7 +13,20 @@ drop table if exists Population;
 drop table if exists Health;
 drop table if exists Education;
 drop table if exists NonSchoolEdu;
+drop table if exists Outcomes;
+drop table if exists Priorities;
 PRAGMA foreign_keys = ON;
+
+CREATE TABLE Priorities (
+    priorityID  INTEGER PRIMARY KEY,
+    description TEXT NOT NULL
+);
+
+CREATE TABLE Outcomes (
+    outcomeID INTEGER PRIMARY KEY,
+    outcome   TEXT NOT NULL,
+    target    TEXT NOT NULL
+);
 
 CREATE TABLE Members (
     sID    TEXT PRIMARY KEY,
