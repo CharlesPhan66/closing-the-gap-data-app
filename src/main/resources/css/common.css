@@ -24,9 +24,7 @@ body {
 
 
 /* Make the logo have a rounded edge */
-img.top-image {
-   vertical-align: middle;
-}
+img.top-image { height: auto; width: auto; max-height: 90px; }
 
 /* CSS Layout from W3Schools: https://www.w3schools.com/css/css_templates.asp */
 /* Style the top navigation bar */
@@ -62,3 +60,48 @@ img.top-image {
    background-color: #cccccc;
    padding: 10px;
  }
+
+/* Topbar (logo, search, actions) */
+.topbar {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   background: #e0e0e0;
+   padding: 10px 16px;
+   gap: 12px;
+}
+.topbar-left, .topbar-center, .topbar-right {
+   display: flex;
+   align-items: center;
+}
+.home-link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px; }
+.site-title { font-weight: bold; font-size: 18px; }
+.search-input { width: 480px; max-width: 60vw; padding: 8px 12px; border-radius: 6px; border: 1px solid #bbb; }
+.btn { padding: 8px 12px; margin-left: 8px; border: none; border-radius: 6px; background: #fff; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+.btn.signin { background: #4CAF50; color: white; }
+.btn.menu { background: #777; color: white; }
+
+/* Hero area: two column */
+.hero { display: flex; gap: 20px; padding: 20px; background: #efefef; margin-top: 16px; }
+.hero-left { flex: 2; background: white; padding: 24px; border-radius: 6px; }
+.hero-right { flex: 1; display: flex; align-items: center; justify-content: center; }
+.graph-placeholder { width: 100%; height: 200px; background: white; border-radius: 6px; display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+/* LGA list */
+.lga-list { columns: 2; list-style: disc; padding-left: 20px; }
+
+/* Carousel / cards */
+.carousel-wrap { background: #e8e8e8; padding: 18px; margin-top: 20px; border-radius: 6px; }
+.carousel { display: flex; gap: 16px; overflow-x: auto; padding: 8px; }
+.card { background: white; min-width: 220px; padding: 16px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.carousel-controls { display:flex; justify-content:center; gap:12px; padding-top:12px; }
+
+/* Fat footer */
+.footer.fat { padding: 30px; text-align: center; }
+
+/* Responsive tweaks */
+@media (max-width: 700px) {
+   .hero { flex-direction: column; }
+   .search-input { max-width: 100%; width: 100%; }
+   .lga-list { columns: 1; }
+}
