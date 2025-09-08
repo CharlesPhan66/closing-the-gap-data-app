@@ -56,7 +56,7 @@ public class JDBCConnection {
             // Process all of the results
             while (results.next()) {
                 // Lookup the columns we need
-                int code     = results.getInt("code");
+                String code     = results.getString("code");
                 String name  = results.getString("name");
 
                 // Create a LGA Object
@@ -86,6 +86,4 @@ public class JDBCConnection {
         // Finally we return all of the lga
         return lgas;
     }
-
-    // TODO: Add your required methods here
 }

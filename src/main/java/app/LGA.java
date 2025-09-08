@@ -8,7 +8,7 @@ package app;
  */
 public class LGA {
    // LGA Code
-   private int code;
+   private String code;
 
    // LGA Name
    private String name;
@@ -19,13 +19,13 @@ public class LGA {
    /**
     * Create an LGA and set the fields
     */
-   public LGA(int code, String name, int year) {
+   public LGA(String code, String name, int year){
       this.code = code;
       this.name = name;
       this.year = year;
    }
 
-   public int getCode() {
+   public String getCode() {
       return code;
    }
 
