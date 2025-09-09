@@ -6,11 +6,6 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
 import java.util.Map;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  * Example Index HTML class using Javalin
@@ -25,7 +20,6 @@ public class PageST2A implements Handler {
 
     // URL of this page relative to http://localhost:7001/
     public static final String URL = "/page2A.html";
-
     private static final String TEMPLATE = ("PageST2A.html");
 
     @Override
