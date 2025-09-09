@@ -238,8 +238,8 @@ public class JDBCConnection {
      * Get all sex values from the Sex table.
      * @return ArrayList of String representing sex ("Female", "Male")
      */
-    public ArrayList<String> getSexValues() {
-        ArrayList<String> sexList = new ArrayList<>();
+    public ArrayList<Gender> getSexValues() {
+        ArrayList<Gender> sexList = new ArrayList<>();
         Connection connection = null;
 
         try {
@@ -247,12 +247,14 @@ public class JDBCConnection {
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
-            String query = "SELECT sex FROM Sex ORDER BY sexID DESC";
+            String query = "SELECT sexID, sex FROM Sex ORDER BY sexID DESC";
             ResultSet results = statement.executeQuery(query);
 
             while (results.next()) {
+                String sexID = results.getString("sexID");
                 String sex = results.getString("sex");
-                sexList.add(sex);
+                Gender gender = new Gender(sexID, sex);
+                sexList.add(gender);
             }
 
             statement.close();

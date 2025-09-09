@@ -30,7 +30,7 @@ public class PageST2B implements Handler {
     public void handle(Context context) throws Exception {
         JDBCConnection jdbc = new JDBCConnection();
         ArrayList<Age> age = jdbc.getAgeGroup();
-        ArrayList<String> gender = jdbc.getSexValues();
+        ArrayList<Gender> gender = jdbc.getSexValues();
 
         Map<String, Object> model = new java.util.HashMap<>();
         model.put("age", age);

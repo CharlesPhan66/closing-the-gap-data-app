@@ -26,7 +26,7 @@
         <h2>List of genders</h2>
         <ul>
             <th:block th:each="g : ${gender}">
-                <li th:text="${g}"></li>
+                <li th:text="${g.sex}"></li>
             </th:block>
         </ul>
     </div>
