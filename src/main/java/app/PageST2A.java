@@ -29,11 +29,16 @@ public class PageST2A implements Handler {
     ArrayList<LGA> lgas = jdbc.getLGAs2016();
     ArrayList<IndigStatus> statusList = jdbc.getIndigStatus();
     ArrayList<State> states = jdbc.getStates();
+    ArrayList<Age> ages = jdbc.getAgeGroup();
+    ArrayList<Gender> genders = jdbc.getSexValues();
 
     Map<String, Object> model = new java.util.HashMap<>();
     model.put("states", states);
     model.put("lgas", lgas);
     model.put("statusList", statusList);
+    model.put("ages", ages);
+    model.put("genders", genders);
+
 
     context.render(TEMPLATE, model);
     }
