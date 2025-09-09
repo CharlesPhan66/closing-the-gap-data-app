@@ -28,62 +28,57 @@ public class JDBCConnection {
     }
 
     /**
-     * Get all of the LGAs in the database.
-     * @return
-     *    Returns an ArrayList of LGA objects
+     * Get all of the LGAs in the database for a given year.
+     * @param year The year to filter LGAs by (2016 or 2021)
+     * @return Returns an ArrayList of LGA objects
      */
-    public ArrayList<LGA> getLGAs2016() {
-        // Create the ArrayList of LGA objects to return
+    public ArrayList<LGA> getLGAsByYear(int year) {
         ArrayList<LGA> lgas = new ArrayList<LGA>();
-
-        // Setup the variable for the JDBC connection
         Connection connection = null;
-
         try {
-            // Connect to JDBC data base
             connection = DriverManager.getConnection(DATABASE);
-
-            // Prepare a new SQL Query & Set a timeout
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-
-            // The Query
-            String query = "SELECT * FROM LGA WHERE year='2016'";
-            
-            // Get Result
+            // Query to get LGA name and total population for each LGA in the given year
+            String query = "SELECT LGA.lgaCode, LGA.lgaName, LGA.year, " +
+                          "COALESCE(SUM(Population.populationValue), 0) as totalPopulation " +
+                          "FROM LGA LEFT JOIN Population ON LGA.lgaCode = Population.lgaCode AND LGA.year = Population.year " +
+                          "WHERE LGA.year = '" + year + "' " +
+                          "GROUP BY LGA.lgaCode, LGA.lgaName, LGA.year";
             ResultSet results = statement.executeQuery(query);
-
-            // Process all of the results
             while (results.next()) {
-                // Lookup the columns we need
-                String code     = results.getString("code");
-                String name  = results.getString("name");
-
-                // Create a LGA Object
-                LGA lga = new LGA(code, name, 2016);
-
-                // Add the lga object to the array
+                String code = results.getString("lgaCode");
+                String name = results.getString("lgaName");
+                int population = results.getInt("totalPopulation");
+                LGA lga = new LGA(code, name, year, population);
                 lgas.add(lga);
             }
-
-            // Close the statement because we are done with it
             statement.close();
         } catch (SQLException e) {
-            // If there is an error, lets just pring the error
             System.err.println(e.getMessage());
         } finally {
-            // Safety code to cleanup
             try {
                 if (connection != null) {
                     connection.close();
                 }
             } catch (SQLException e) {
-                // connection close failed.
                 System.err.println(e.getMessage());
             }
         }
-
-        // Finally we return all of the lga
         return lgas;
+    }
+
+    /**
+     * Get all of the LGAs in the database for 2016.
+     */
+    public ArrayList<LGA> getLGAs2016() {
+        return getLGAsByYear(2016);
+    }
+
+    /**
+     * Get all of the LGAs in the database for 2021.
+     */
+    public ArrayList<LGA> getLGAs2021() {
+        return getLGAsByYear(2021);
     }
 }

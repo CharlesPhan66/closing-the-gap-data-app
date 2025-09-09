@@ -16,13 +16,17 @@ public class LGA {
    // LGA Year
    private int year;
 
+   // LGA Total Population
+   private int population;
+
    /**
     * Create an LGA and set the fields
     */
-   public LGA(String code, String name, int year){
+   public LGA(String code, String name, int year, int population){
       this.code = code;
       this.name = name;
       this.year = year;
+      this.population = population;
    }
 
    public String getCode() {
@@ -35,5 +39,9 @@ public class LGA {
 
    public int getYear() {
       return year;
+   }
+
+   public int getPopulation() {
+      return population;
    }
 }

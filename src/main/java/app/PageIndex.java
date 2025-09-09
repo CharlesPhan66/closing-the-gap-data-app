@@ -27,27 +27,35 @@ public class PageIndex implements Handler {
 
     @Override
     public void handle(Context context) throws Exception {
-        // Create a simple HTML webpage in a String
+        // Get year and lgaCode from query params
+        String yearParam = context.queryParam("year");
+        String lgaCodeParam = context.queryParam("lgaCode");
+        int year = 2016;
+        if (yearParam != null && (yearParam.equals("2016") || yearParam.equals("2021"))) {
+            year = Integer.parseInt(yearParam);
+        }
+
+        JDBCConnection jdbc = new JDBCConnection();
+        ArrayList<LGA> lgas = (year == 2021) ? jdbc.getLGAs2021() : jdbc.getLGAs2016();
+
+        // Find selected LGA if any
+        LGA selectedLGA = null;
+        if (lgaCodeParam != null) {
+            for (LGA lga : lgas) {
+                if (lga.getCode().equals(lgaCodeParam)) {
+                    selectedLGA = lga;
+                    break;
+                }
+            }
+        }
+
+        // Build HTML
         String html = "<html>";
-
-        // Add some Header information
-        html = html + "<head>" + 
-               "<title>Homepage</title>";
-
-        // Add some Header information
-        html = html + "<head>" + 
-               "<title>Homepage</title>";
-
-        // Add some CSS (external file)
-        html = html + "<link rel='stylesheet' type='text/css' href='common.css' />";
-        html = html + "</head>";
-        
-        // Add the body
-        html = html + "<body>";
-        
-        // Add the topnav
-        // This uses a Java v15+ Text Block
-        html = html + """
+        html += "<head><title>Homepage</title>";
+        html += "<link rel='stylesheet' type='text/css' href='common.css' />";
+        html += "</head>";
+        html += "<body>";
+        html += """
             <div class='topnav'>
                 <a href='/'>Homepage</a>
                 <a href='mission.html'>Our Mission</a>
@@ -57,9 +65,7 @@ public class PageIndex implements Handler {
                 <a href='page3B.html'>Sub Task 3.B</a>
             </div>
         """;
-
-        // Top bar with logo, search and actions
-        html = html + """
+        html += """
             <div class='topbar'>
                 <div class='topbar-left'>
                     <a href='/' class='home-link'><img src='CtGLogo.png' class='top-image logo-main' alt='Logo'>
@@ -71,49 +77,55 @@ public class PageIndex implements Handler {
                     <button class='btn menu'>Menu</button>
                 </div>
             </div>
-
             <div class='search-row'>
                 <input type='search' class='search-input big' placeholder='Search LGAs, outcomes, detailed outcomes, projects...'>
             </div>
         """;
+        html += "<div class='content'>";
+        html += "<section class='hero'>";
+        html += "<div class='hero-left'>";
+        html += "<h2>Narrative about population</h2>";
+        html += "<p>Select a year and LGA to view its population.</p>";
+        html += "</div>";
+        html += "<div class='hero-right'>";
+        // Dropdown form for year and LGA
+        html += "<form method='get' action='/'>";
+        html += "<label for='year'>Year: </label>";
+        html += "<select name='year' id='year' onchange='this.form.submit()'>";
+        html += "<option value='2016'" + (year == 2016 ? " selected" : "") + ">2016</option>";
+        html += "<option value='2021'" + (year == 2021 ? " selected" : "") + ">2021</option>";
+        html += "</select> ";
+        html += "<label for='lgaCode'>LGA: </label>";
+        html += "<select name='lgaCode' id='lgaCode' onchange='this.form.submit()'>";
+        html += "<option value=''>--Select LGA--</option>";
+        for (LGA lga : lgas) {
+            html += "<option value='" + lga.getCode() + "'" + (lgaCodeParam != null && lga.getCode().equals(lgaCodeParam) ? " selected" : "") + ">" + lga.getName() + "</option>";
+        }
+        html += "</select>";
+        html += "</form>";
+        html += "</div></section>";
 
-        // Add Div for page Content
-        html = html + "<div class='content'>";
-
-        // Hero area: narrative + graph
-        html = html + """
-            <section class='hero'>
-                <div class='hero-left'>
-                    <h2>Narrative about population</h2>
-                    <p>This area contains a short narrative summary and quick links. You can add charts or summaries here. Below is a list of LGAs from the 2016 dataset.</p>
-                </div>
-                <div class='hero-right'>
-                    <div class='graph-placeholder'>Graph</div>
-                </div>
-            </section>
-        """;
-
-        // Add HTML for the LGA list
-        html = html + "<h1>All 2016 LGAs in the Voice to Parliament database</h1>" + "<ul>";
-
-        // Finish the List HTML
-        html = html + "</ul>";
-
+        // Show selected LGA info
+        html += "<div class='lga-list-section'>";
+        if (selectedLGA != null) {
+            html += "<h2>" + selectedLGA.getName() + "</h2>";
+            html += "<p>Population (" + year + "): <b>" + selectedLGA.getPopulation() + "</b></p>";
+        } else {
+            html += "<p>Please select an LGA to view its population.</p>";
+        }
+        html += "</div>";
         // Carousel of cards (17 outcomes) with Next/Back pagination
-        html = html + """
+        html += """
             <section class='carousel-wrap'>
                 <div class='carousel' id='carousel'>
         """;
-
-        // Generate 17 outcome cards
         for (int i = 1; i <= 17; i++) {
-            html = html + "<div class='card' data-index='" + i + "'>" +
+            html += "<div class='card' data-index='" + i + "'>" +
                    "<h4>Outcome " + i + "</h4>" +
                    "<p>Short description for outcome " + i + "</p>" +
                    "</div>";
         }
-
-        html = html + """
+        html += """
                 </div>
                 <div class='carousel-controls'>
                     <button class='btn prev' id='prevBtn'>Back</button>
@@ -121,7 +133,6 @@ public class PageIndex implements Handler {
                     <button class='btn next' id='nextBtn'>Next</button>
                 </div>
             </section>
-
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const carousel = document.getElementById('carousel');
@@ -129,53 +140,36 @@ public class PageIndex implements Handler {
                     const next = document.getElementById('nextBtn');
                     const pageSpan = document.getElementById('carousel-page');
                     const pagesSpan = document.getElementById('carousel-pages');
-
                     function update() {
                         const pages = Math.max(1, Math.ceil(carousel.scrollWidth / carousel.clientWidth));
                         const page = Math.round(carousel.scrollLeft / carousel.clientWidth) + 1;
                         pageSpan.textContent = page;
                         pagesSpan.textContent = pages;
                     }
-
                     prev.addEventListener('click', function() {
                         carousel.scrollBy({ left: -carousel.clientWidth, behavior: 'smooth' });
                         setTimeout(update, 300);
                     });
-
                     next.addEventListener('click', function() {
                         carousel.scrollBy({ left: carousel.clientWidth, behavior: 'smooth' });
                         setTimeout(update, 300);
                     });
-
                     carousel.addEventListener('scroll', function() {
-                        // throttle-ish update
                         if (this._updating) return;
                         this._updating = true;
                         window.requestAnimationFrame(function() { update(); carousel._updating = false; });
                     });
-
-                    // initial update
                     update();
                 });
             </script>
         """;
-
-        // Close Content div
-        html = html + "</div>";
-
-        // Footer
-        html = html + """
+        html += "</div>";
+        html += """
             <div class='footer'>
                 <p>COSC3056 - Studio Project Starter Code (Sep23)</p>
             </div>
         """;
-
-        // Finish the HTML webpage
-        html = html + "</body>" + "</html>";
-
-
-        // DO NOT MODIFY THIS
-        // Makes Javalin render the webpage
+        html += "</body></html>";
         context.html(html);
     }
 }
