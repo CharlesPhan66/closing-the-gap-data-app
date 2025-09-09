@@ -132,7 +132,7 @@ public class PageIndex implements Handler {
 
             // Process all of the results
             while (results.next()) {
-                String name16  = results.getString("name");
+                String name16  = results.getString("lgaName");
 
                 // Add the lga object to the array
                 lgas.add(name16);

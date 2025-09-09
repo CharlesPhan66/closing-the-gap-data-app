@@ -7,14 +7,8 @@ package app;
  * @author Timothy Wiley, 2023. email: timothy.wiley@rmit.edu.au
  */
 public class LGA {
-   // LGA Code
-   private String code;
-
-   // LGA Name
-   private String name;
-
-   // LGA Year
-   private int year;
+   // No-argument constructor for frameworks and template engines
+   public LGA() {}
 
    /**
     * Create an LGA and set the fields
@@ -25,15 +19,37 @@ public class LGA {
       this.year = year;
    }
 
+   // LGA Code
+   private String code;
+
+   // LGA Name
+   private String name;
+
+   // LGA Year
+   private int year;
+
+
    public String getCode() {
       return code;
+   }
+
+   public void setCode(String code) {
+      this.code = code;
    }
 
    public String getName() {
       return name;
    }
 
+   public void setName(String name) {
+      this.name = name;
+   }
+
    public int getYear() {
       return year;
+   }
+
+   public void setYear(int year) {
+      this.year = year;
    }
 }
