@@ -31,6 +31,7 @@ public class PageST2A implements Handler {
     ArrayList<State> states = jdbc.getStates();
     ArrayList<Age> ages = jdbc.getAgeGroup();
     ArrayList<Gender> genders = jdbc.getSexValues();
+    ArrayList<Condition> conditions = jdbc.getHealthConditions();
 
     Map<String, Object> model = new java.util.HashMap<>();
     model.put("states", states);
@@ -38,6 +39,7 @@ public class PageST2A implements Handler {
     model.put("statusList", statusList);
     model.put("ages", ages);
     model.put("genders", genders);
+    model.put("conditions", conditions);
 
 
     context.render(TEMPLATE, model);

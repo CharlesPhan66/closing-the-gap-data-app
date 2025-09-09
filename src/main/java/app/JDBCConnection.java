@@ -16,6 +16,40 @@ import java.sql.Statement;
  * @author Santha Sumanasekara, 2021. email: santha.sumanasekara@rmit.edu.au
  */
 public class JDBCConnection {
+    /**
+     * Get all health conditions in the database.
+     * @return ArrayList of HealthCondition objects
+     */
+    public ArrayList<Condition> getHealthConditions() {
+        ArrayList<Condition> conditions = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            String query = "SELECT conditionID, diseaseName, description FROM healthCondition";
+            ResultSet results = statement.executeQuery(query);
+            while (results.next()) {
+                String conditionID = results.getString("conditionID");
+                String diseaseName = results.getString("diseaseName");
+                String description = results.getString("description");
+                Condition condition = new Condition(conditionID, diseaseName, description);
+                conditions.add(condition);
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return conditions;
+    }
 
     /**
      * Get all States in the database.

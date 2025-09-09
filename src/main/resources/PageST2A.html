@@ -59,6 +59,14 @@
                 </th:block>
             </ul>
         </div>
+        <div>
+            <h2>Health Conditions List</h2>
+            <ul>
+                <th:block th:each="condition : ${conditions}">
+                <li th:text="${condition.diseaseName}"></li>
+                </th:block>
+            </ul>
+        </div>
     </div>
     <div class='footer'>
         <p>COSC3056 - Studio Project Starter Code</p>
