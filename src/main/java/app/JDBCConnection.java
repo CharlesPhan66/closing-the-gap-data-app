@@ -87,5 +87,119 @@ public class JDBCConnection {
         return lgas;
     }
 
+    /**
+     * Get population value by age range and gender.
+     */
+    public int getPopulationValue(int ageStart, String ageEnd, String gender) {
+        int populationValue = 0;
+        Connection connection = null;
+
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            String query = String.format(
+                "SELECT p.populationValue " +
+                "FROM population p " +
+                "JOIN Sex s ON p.sexID = s.sexID " +
+                "JOIN ageGroup ag ON p.ageID = ag.ageID " +
+                "WHERE ag.ageStart = '%d' AND ag.ageEnd = '%s' AND s.sex = '%s'",
+                ageStart, ageEnd, gender
+            );
+
+            ResultSet results = statement.executeQuery(query);
+
+            if (results.next()) {
+                populationValue = results.getInt("populationValue");
+            }
+
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return populationValue;
+    }
+
+    /**
+     * Get all age groups from the ageGroup table.
+     * @return ArrayList of Age objects
+     */
+    public ArrayList<Age> getAgeGroup() {
+        ArrayList<Age> ageGroups = new ArrayList<>();
+        Connection connection = null;
+
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            String query = "SELECT ageID, ageStart, ageEnd FROM ageGroup";
+            ResultSet results = statement.executeQuery(query);
+
+            while (results.next()) {
+                int ageID = results.getInt("ageID");
+                int ageStart = results.getInt("ageStart");
+                int ageEnd = results.getInt("ageEnd");
+                Age age = new Age(ageID, ageStart, ageEnd);
+                ageGroups.add(age);
+            }
+
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return ageGroups;
+    }
+
+    /**
+     * Get all sex values from the Sex table.
+     * @return ArrayList of String representing sex ("Female", "Male")
+     */
+    public ArrayList<String> getSexValues() {
+        ArrayList<String> sexList = new ArrayList<>();
+        Connection connection = null;
+
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            String query = "SELECT sex FROM Sex ORDER BY sexID DESC";
+            ResultSet results = statement.executeQuery(query);
+
+            while (results.next()) {
+                String sex = results.getString("sex");
+                sexList.add(sex);
+            }
+
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return sexList;
+    }
+
     // TODO: Add your required methods here
 }
