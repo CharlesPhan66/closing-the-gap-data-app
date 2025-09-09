@@ -1,7 +1,5 @@
 package app;
 
-import java.util.ArrayList;
-
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
@@ -10,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 /**
  * Example Index HTML class using Javalin
@@ -29,10 +28,6 @@ public class PageIndex implements Handler {
     public void handle(Context context) throws Exception {
         // Create a simple HTML webpage in a String
         String html = "<html>";
-
-        // Add some Header information
-        html = html + "<head>" + 
-               "<title>Homepage</title>";
 
         // Add some Header information
         html = html + "<head>" + 
@@ -58,7 +53,7 @@ public class PageIndex implements Handler {
             </div>
         """;
 
-        // Top bar with logo, search and actions
+        // Add header content block
         html = html + """
             <div class='topbar'>
                 <div class='topbar-left'>
@@ -80,6 +75,11 @@ public class PageIndex implements Handler {
         // Add Div for page Content
         html = html + "<div class='content'>";
 
+        // Add HTML for the page content
+        html = html + """
+            <p>Homepage content</p>
+            """;
+
         // Hero area: narrative + graph
         html = html + """
             <section class='hero'>
@@ -93,11 +93,20 @@ public class PageIndex implements Handler {
             </section>
         """;
 
+        // Get the ArrayList of Strings of all LGAs
+        ArrayList<String> lgaNames = getLGAs2016();
+
         // Add HTML for the LGA list
         html = html + "<h1>All 2016 LGAs in the Voice to Parliament database</h1>" + "<ul>";
 
+        // Finally we can print out all of the LGAs
+        for (String name : lgaNames) {
+            html = html + "<li>" + name + "</li>";
+        }
+
         // Finish the List HTML
         html = html + "</ul>";
+        
 
         // Carousel of cards (17 outcomes) with Next/Back pagination
         html = html + """
@@ -166,16 +175,69 @@ public class PageIndex implements Handler {
         // Footer
         html = html + """
             <div class='footer'>
-                <p>COSC3056 - Studio Project Starter Code (Sep23)</p>
+                <p>Link to About us</p>
             </div>
         """;
 
         // Finish the HTML webpage
         html = html + "</body>" + "</html>";
-
+        
 
         // DO NOT MODIFY THIS
         // Makes Javalin render the webpage
         context.html(html);
+    }
+
+    /**
+     * Get the names of the LGAs in the database.
+     */
+    public ArrayList<String> getLGAs2016() {
+        // Create the ArrayList of LGA objects to return
+        ArrayList<String> lgas = new ArrayList<String>();
+
+        // Setup the variable for the JDBC connection
+        Connection connection = null;
+
+        try {
+            // Connect to JDBC data base
+            connection = DriverManager.getConnection(JDBCConnection.DATABASE);
+
+            // Prepare a new SQL Query & Set a timeout
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // The Query
+            String query = "SELECT * FROM LGA WHERE year='2016'";
+            
+            // Get Result
+            ResultSet results = statement.executeQuery(query);
+
+            // Process all of the results
+            while (results.next()) {
+                String name16  = results.getString("name");
+
+                // Add the lga object to the array
+                lgas.add(name16);
+            }
+
+            // Close the statement because we are done with it
+            statement.close();
+        } catch (SQLException e) {
+            // If there is an error, lets just pring the error
+            System.err.println(e.getMessage());
+        } finally {
+            // Safety code to cleanup
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                // connection close failed.
+                System.err.println(e.getMessage());
+            }
+        }
+
+        // Finally we return all of the lga
+        return lgas;
     }
 }
