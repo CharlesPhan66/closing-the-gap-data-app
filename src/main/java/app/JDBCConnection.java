@@ -17,6 +17,74 @@ import java.sql.Statement;
  */
 public class JDBCConnection {
 
+    /**
+     * Get all States in the database.
+     * @return ArrayList of State objects
+     */
+    public ArrayList<State> getStates() {
+        ArrayList<State> states = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            String query = "SELECT name FROM States";
+            ResultSet results = statement.executeQuery(query);
+            while (results.next()) {
+                String stateName = results.getString("name");
+                State state = new State();
+                state.setName(stateName);
+                states.add(state);
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return states;
+    }
+
+    /**
+     * Get all status from the indigStatus table.
+     * @return ArrayList of IndigStatus objects
+     */
+    public ArrayList<IndigStatus> getIndigStatus() {
+        ArrayList<IndigStatus> statusList = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            String query = "SELECT * FROM indigStatus";
+            ResultSet results = statement.executeQuery(query);
+            while (results.next()) {
+                String statusID = results.getString(1);
+                String statusName = results.getString(2);
+                IndigStatus status = new IndigStatus(statusID, statusName);
+                statusList.add(status);
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return statusList;
+    }
+
     // Name of database file (contained in database folder)
     public static final String DATABASE = "jdbc:sqlite:database/CTG.db";
 
@@ -48,7 +116,7 @@ public class JDBCConnection {
             statement.setQueryTimeout(30);
 
             // The Query
-            String query = "SELECT * FROM LGA WHERE year='2016'";
+            String query = "SELECT lgaCode, lgaName FROM LGA WHERE year=2016";
             
             // Get Result
             ResultSet results = statement.executeQuery(query);
@@ -56,8 +124,8 @@ public class JDBCConnection {
             // Process all of the results
             while (results.next()) {
                 // Lookup the columns we need
-                String code     = results.getString("code");
-                String name  = results.getString("name");
+                String code  = results.getString("lgaCode");
+                String name  = results.getString("lgaName");
 
                 // Create a LGA Object
                 LGA lga = new LGA(code, name, 2016);
