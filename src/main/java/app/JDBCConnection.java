@@ -1,7 +1,7 @@
 package app;
 
 import java.util.ArrayList;
-
+import java.lang.StringBuilder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -16,6 +16,75 @@ import java.sql.Statement;
  * @author Santha Sumanasekara, 2021. email: santha.sumanasekara@rmit.edu.au
  */
 public class JDBCConnection {
+    /**
+     * Get Health records by filters: year, lgaCode, sexID, statusID
+     * Any filter can be null to ignore that filter.
+     */
+    public ArrayList<Health> getHealthByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID) {
+        ArrayList<Health> healthList = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            StringBuilder query = new StringBuilder();
+            query.append("""
+                            SELECT 
+                                l.lgaName, 
+                                s.sex, 
+                                st.status, 
+                                hC.diseaseName, 
+                                h.populationValue 
+                            FROM Health h
+                            JOIN LGA l 
+                                ON h.lgaCode = l.lgaCode AND h.year = l.year
+                            JOIN Sex s
+                                ON h.sexID = s.sexID
+                            JOIN indigStatus st
+                                ON h.statusID = st.statusID
+                            JOIN healthCondition hC
+                                ON h.conditionID = hC.conditionID
+                            WHERE 1=1
+                        """);
+            if (year != null && !year.equals("none")) {
+                query.append(" AND h.year='").append(year).append("'");
+            }
+            if (lgaCode != null && !lgaCode.equals("none")) {
+                query.append(" AND h.lgaCode='").append(lgaCode).append("'");
+            }
+            if (sexID != null && !sexID.equals("none")) {
+                query.append(" AND h.sexID='").append(sexID).append("'");
+            }
+            if (statusID != null && !statusID.equals("none")) {
+                query.append(" AND h.statusID='").append(statusID).append("'");
+            }
+            if (conditionID != null && !conditionID.equals("none")) {
+                query.append(" AND h.conditionID='").append(conditionID).append("'");
+            }
+            ResultSet results = statement.executeQuery(query.toString());
+            while (results.next()) {
+                String resultLgaName = results.getString("lgaName");
+                String resultSex = results.getString("sex");
+                String resultStatus = results.getString("status");
+                String resultDisease = results.getString("diseaseName");
+                int populationValue = results.getInt("populationValue");
+                Health health = new Health(resultLgaName, resultSex, resultStatus, resultDisease, populationValue);
+                healthList.add(health);
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return healthList;
+    }
     /**
      * Get all the LGAs of a specific State.
      * @return ArrayList of LGA objects
