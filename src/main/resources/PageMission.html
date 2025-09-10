@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Our Mission</title>
+        <link rel="stylesheet" type = "text/css" href="common.css">
+    </head>
+
+    <body>
+        <link rel="stylesheet" type = "text/css" href="common.css">
+    </body>
+
+    <div class="topnav">
+        <a href="/">Homepage</a>
+        <a href="mission.html">Our Mission</a>
+        <a href="page2A.html">Sub Task 2.A</a>
+        <a href="page2B.html">Sub Task 2.B</a>
+        <a href="page3A.html">Sub Task 3.A</a>
+        <a href="page3B.html">Sub Task 3.B</a>
+    </div>
+
+    <div class="header">
+        <h1>Subtask 1.B</h1>
+    </div>
+    <div class="content">
+        <h2>List of Members</h2>
+        <ul>
+            <th:block th:each="member : ${members}">
+                <li th:text="${member.name}"></li>
+            </th:block>
+        </ul>
+        <h2>Persona Information</h2>
+        <ul>
+            <th:block th:each="persona : ${persona}">
+                <li th:text="${persona.quote}"></li>
+            </th:block>
+            <th:block th:each="persona : ${persona}">
+                <li th:text="${persona.background}"></li>
+            </th:block>
+            <th:block th:each="persona : ${persona}">
+                <li th:text="${persona.needs_goals}"></li>
+            </th:block>
+            <th:block th:each="persona : ${persona}">
+                <li th:text="${persona.pain_points}"></li>
+            </th:block>
+            <th:block th:each="persona : ${persona}">
+                <li th:text="${persona.skills_experience}"></li>
+            </th:block>
+        </ul>
+     </div>
+    <div class="footer">
+        <p>COSC3056</p>
+    </div>
+    
+</html>
+

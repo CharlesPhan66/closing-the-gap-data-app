@@ -86,4 +86,118 @@ public class JDBCConnection {
         // Finally we return all of the lga
         return lgas;
     }
+
+    public ArrayList<Members> getMembers() {
+        // Create the ArrayList of Member objects to return
+        ArrayList<Members> members = new ArrayList<Members>();
+
+        // Setup the variable for the JDBC connection
+        Connection connection = null;
+
+        try {
+            // Connect to JDBC data base
+            connection = DriverManager.getConnection(DATABASE);
+
+            // Prepare a new SQL Query & Set a timeout
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // The Query
+            String query = "SELECT sID AS code, name FROM MEMBERS";
+            
+            // Get Result
+            ResultSet results = statement.executeQuery(query);
+
+            // Process all of the results
+            while (results.next()) {
+                // Lookup the columns we need
+                String code     = results.getString("code");
+                String name  = results.getString("name");
+
+                // Create a Member Object
+                Members member = new Members(code, name);
+
+                // Add the member object to the array
+                members.add(member);
+            }
+
+            // Close the statement because we are done with it
+            statement.close();
+        } catch (SQLException e) {
+            // If there is an error, lets just pring the error
+            System.err.println(e.getMessage());
+        } finally {
+            // Safety code to cleanup
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                // connection close failed.
+                System.err.println(e.getMessage());
+            }
+        }
+
+        // Finally we return all of the members
+        return members;
+    }
+
+    public ArrayList<Persona> getPersona() {
+        // Create the ArrayList of Persona objects to return
+        ArrayList<Persona> persona = new ArrayList<Persona>();
+
+        // Setup the variable for the JDBC connection
+        Connection connection = null;
+
+        try {
+            // Connect to JDBC data base
+            connection = DriverManager.getConnection(DATABASE);
+
+            // Prepare a new SQL Query & Set a timeout
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // The Query
+            String query = "SELECT id AS code, quote, background, needs_goals, pain_points, skills_experience FROM PERSONA";
+            
+            // Get Result
+            ResultSet results = statement.executeQuery(query);
+
+            // Process all of the results
+            while (results.next()) {
+                // Lookup the columns we need
+                String code     = results.getString("code");
+                String quote  = results.getString("quote");
+                String background = results.getString("background");
+                String needs_goals = results.getString("needs_goals");
+                String pain_points = results.getString("pain_points");
+                String skills_experience = results.getString("skills_experience");
+
+                // Create a Person Object
+                Persona p = new Persona(code, quote, background, needs_goals, pain_points, skills_experience);
+
+                // Add the persona object to the array
+                persona.add(p);
+            }
+
+            // Close the statement because we are done with it
+            statement.close();
+        } catch (SQLException e) {
+            // If there is an error, lets just pring the error
+            System.err.println(e.getMessage());
+        } finally {
+            // Safety code to cleanup
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                // connection close failed.
+                System.err.println(e.getMessage());
+            }
+        }
+
+        // Finally we return all of the persona
+        return persona;
+    }
 }
