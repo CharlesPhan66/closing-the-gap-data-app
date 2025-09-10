@@ -74,7 +74,7 @@ public class JDBCConnection {
             String query = "SELECT LGA.lgaCode, LGA.lgaName, LGA.year, LGA.stateID, " +
                           "COALESCE(SUM(Population.populationValue), 0) as totalPopulation " +
                           "FROM LGA LEFT JOIN Population ON LGA.lgaCode = Population.lgaCode AND LGA.year = Population.year " +
-                          "WHERE LGA.year = '" + year + "' " +
+                          "WHERE LGA.year = " + year + " " +
                           "GROUP BY LGA.lgaCode, LGA.lgaName, LGA.year, LGA.stateID";
             ResultSet results = statement.executeQuery(query);
             while (results.next()) {
@@ -101,52 +101,6 @@ public class JDBCConnection {
     }
 
     /**
-     * Get all of the LGAs in the database for 2016.
-     */
-    public ArrayList<LGA> getLGAs2016() {
-        return getLGAsByYear(2016);
-    }
-
-    /**
-     * Get all of the LGAs in the database for 2021.
-     */
-    public ArrayList<LGA> getLGAs2021() {
-        return getLGAsByYear(2021);
-    }
-
-    /**
-     * Get all raw population records for a specific LGA and year (no aggregation).
-     */
-    public ArrayList<Integer> getPopulationRecordsForLGA(String lgaCode, int year) {
-        ArrayList<Integer> populations = new ArrayList<>();
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(DATABASE);
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);
-            String query = "SELECT Population.populationValue " +
-                          "FROM LGA INNER JOIN Population ON LGA.lgaCode = Population.lgaCode AND LGA.year = Population.year " +
-                          "WHERE LGA.lgaCode = '" + lgaCode + "' AND LGA.year = '" + year + "'";
-            ResultSet results = statement.executeQuery(query);
-            while (results.next()) {
-                populations.add(results.getInt("populationValue"));
-            }
-            statement.close();
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                System.err.println(e.getMessage());
-            }
-        }
-        return populations;
-    }
-
-    /**
      * Get the total population for a state and year (sum of all LGAs in the state).
      */
     public int getTotalPopulationForState(int stateId, int year) {
@@ -158,7 +112,7 @@ public class JDBCConnection {
             statement.setQueryTimeout(30);
             String query = "SELECT SUM(Population.populationValue) as statePopulation " +
                           "FROM LGA INNER JOIN Population ON LGA.lgaCode = Population.lgaCode AND LGA.year = Population.year " +
-                          "WHERE LGA.stateID = '" + stateId + "' AND LGA.year = '" + year + "'";
+                          "WHERE LGA.stateID = " + stateId + " AND LGA.year = " + year;
             ResultSet results = statement.executeQuery(query);
             if (results.next()) {
                 total = results.getInt("statePopulation");

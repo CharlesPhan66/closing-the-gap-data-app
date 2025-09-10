@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Xử lý yêu cầu HTTP và chuẩn bị dữ liệu cho Thymeleaf template.
+ * Handles HTTP requests for the index page and prepares data for the Thymeleaf template.
  */
 public class PageIndex implements Handler {
 
@@ -15,39 +15,30 @@ public class PageIndex implements Handler {
 
     @Override
     public void handle(Context context) throws Exception {
-        // Lấy và xử lý các tham số từ URL
+        // Get parameters from the URL
         String yearParam = context.queryParam("year");
         String lgaCodeParam = context.queryParam("lgaCode");
         String stateIdParam = context.queryParam("stateId");
         
-        int year = 2016;
-        if (yearParam != null && (yearParam.equals("2016") || yearParam.equals("2021"))) {
-            year = Integer.parseInt(yearParam);
-        }
+        int year = (yearParam != null && yearParam.equals("2021")) ? 2021 : 2016;
 
-        // Khởi tạo kết nối database và lấy dữ liệu
+        // Establish database connection and retrieve data
         JDBCConnection jdbc = new JDBCConnection();
-        ArrayList<LGA> allLGAs = (year == 2021) ? jdbc.getLGAs2021() : jdbc.getLGAs2016();
+        ArrayList<LGA> allLGAs = jdbc.getLGAsByYear(year);
         ArrayList<State> states = jdbc.getStates();
+        ArrayList<Outcome> outcomes = jdbc.getOutcomes();
 
-        // Xử lý selected state và lọc LGAs
-        int selectedStateId = 1;
-        State selectedState = null;
+        // Determine the selected state
+        int selectedStateId = 1; // Default to the first state
         if (stateIdParam != null) {
             try {
                 selectedStateId = Integer.parseInt(stateIdParam);
             } catch (NumberFormatException e) {
-                selectedStateId = 1;
-            }
-        }
-        for (State state : states) {
-            if (state.getStateID() == selectedStateId) {
-                selectedState = state;
-                break;
+                // Keep the default if the parameter is invalid
             }
         }
 
-        // Lọc LGAs theo state đã chọn
+        // Filter LGAs based on the selected state
         ArrayList<LGA> filteredLGAs = new ArrayList<>();
         for (LGA lga : allLGAs) {
             if (lga.getStateID() == selectedStateId) {
@@ -55,24 +46,37 @@ public class PageIndex implements Handler {
             }
         }
 
-        // Tìm LGA đã chọn
+        // Find the selected LGA object and validate it
         LGA selectedLGA = null;
+        boolean isLgaInState = false;
         if (lgaCodeParam != null) {
             for (LGA lga : filteredLGAs) {
                 if (lga.getCode().equals(lgaCodeParam)) {
                     selectedLGA = lga;
+                    isLgaInState = true;
                     break;
                 }
             }
         }
+        // If the selected LGA is not in the current state, reset it
+        if (!isLgaInState) {
+            lgaCodeParam = null;
+            selectedLGA = null; // Also nullify the object
+        }
+
+        // Find the selected State object
+        State selectedState = null;
+        for (State state : states) {
+            if (state.getStateID() == selectedStateId) {
+                selectedState = state;
+                break;
+            }
+        }
         
-        // Lấy dân số của bang đã chọn
+        // Get the total population for the selected state
         int statePopulation = jdbc.getTotalPopulationForState(selectedStateId, year);
         
-        // Lấy danh sách outcomes
-        ArrayList<Outcome> outcomes = jdbc.getOutcomes();
-
-        // Chuẩn bị model để truyền dữ liệu tới template
+        // Prepare the data model to be passed to the template
         Map<String, Object> model = new HashMap<>();
         model.put("year", year);
         model.put("states", states);
@@ -84,7 +88,7 @@ public class PageIndex implements Handler {
         model.put("statePopulation", statePopulation);
         model.put("outcomes", outcomes);
         
-        // Render template với model
+        // Render the template with the model data
         context.render("index.html", model);
     }
 }
