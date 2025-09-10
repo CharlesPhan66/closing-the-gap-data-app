@@ -59,103 +59,107 @@
         </div>
 
         <!-- Continue with the rest of your filters in a final form -->
-        <div th:if="${selectedState != null and selectedState != 'none' and selectedYear != null and selectedYear != 'none' and selectedLGA != null and selectedLGA != 'none'}">
+        <div th:if="${selectedState != null and selectedState != 'none' 
+                    and selectedYear != null and selectedYear != 'none' 
+                    and selectedLGA != null and selectedLGA != 'none'}">
             <form id="filterForm" method="POST" action="/page2B.html">
                 <input type="hidden" name="targetState" th:value="${selectedState}" />
                 <input type="hidden" name="targetYear" th:value="${selectedYear}" />
                 <input type="hidden" name="targetLGA" th:value="${selectedLGA}" />
-                <label for="targetStatus">Indigenous Status:</label>
-                <select name="targetStatus" id="targetStatus">
-                    <option value="none" th:selected="${selectedStatus == null or selectedStatus == 'none'}">-- Select Status --</option>
-                    <th:block th:each="status : ${statusList}">
-                        <option th:value="${status.statusID}"
-                                th:text="${status.statusName}"
-                                th:selected="${status.statusID == selectedStatus}"></option>
-                    </th:block>
-                </select>
-                <label for="targetAge">Age Group:</label>
-                <select name="targetAge" id="targetAge">
-                    <option value="none" th:selected="${selectedAge == null or selectedAge == 'none'}">-- Select Age --</option>
-                    <th:block th:each="age : ${ages}">
-                        <option th:value="${age.ageID}"
-                                th:text="${age.ageStart == 65} ? ${age.ageStart} + ' and over' : ${age.ageStart} + ' - ' + ${age.ageEnd}"
-                                th:selected="${age.ageID == selectedAge}"></option>
-                    </th:block>
-                </select>
-                <label for="targetGender">Gender:</label>
-                <select name="targetGender" id="targetGender">
-                    <option value="none" th:selected="${selectedGender == null or selectedGender == 'none'}">-- Select Gender --</option>
-                    <th:block th:each="gender : ${genders}">
-                        <option th:value="${gender.sexID}"
-                                th:text="${gender.sex}"
-                                th:selected="${gender.sexID == selectedGender}"></option>
-                    </th:block>
-                </select>
-                <!-- Education Type selection in its own form -->
-                <form id="eduTypeForm" method="POST" action="/page2B.html" th:if="${selectedState != null and selectedState != 'none' and selectedYear != null and selectedYear != 'none' and selectedLGA != null and selectedLGA != 'none'}">
-                    <input type="hidden" name="targetState" th:value="${selectedState}" />
-                    <input type="hidden" name="targetYear" th:value="${selectedYear}" />
-                    <input type="hidden" name="targetLGA" th:value="${selectedLGA}" />
-                    <input type="hidden" name="targetStatus" th:value="${selectedStatus}" />
-                    <input type="hidden" name="targetAge" th:value="${selectedAge}" />
-                    <input type="hidden" name="targetGender" th:value="${selectedGender}" />
-                    <label for="targetEduType">Education Type:</label>
-                    <select name="targetEduType" id="targetEduType" onchange="this.form.submit()">
-                        <option value="none" th:selected="${selectedEduType == null or selectedEduType == 'none'}">-- Select Type --</option>
-                        <option value="Education" th:selected="${selectedEduType == 'Education'}">School Education</option>
-                        <option value="NonSchoolEdu" th:selected="${selectedEduType == 'NonSchoolEdu'}">Non-School Education</option>
-                    </select>
-                </form>
 
-                <!-- Education Level/Non-School Degree dropdown appears after Education Type is chosen -->
+                <label for="targetEduType">Education Type:</label>
+                <select name="targetEduType" id="targetEduType" onchange="this.form.submit()">
+                    <option value="none" th:selected="${selectedEduType == null or selectedEduType == 'none'}">-- Select Type --</option>
+                    <option value="Education" th:selected="${selectedEduType == 'Education'}">School Education</option>
+                    <option value="NonSchoolEdu" th:selected="${selectedEduType == 'NonSchoolEdu'}">Non-School Education</option>
+                </select>
+
+                <!-- Only show the rest of the filters if Education Type is chosen -->
                 <div th:if="${selectedEduType != null and selectedEduType != 'none'}">
-                    <form id="eduLevelForm" method="POST" action="/page2B.html">
-                        <input type="hidden" name="targetState" th:value="${selectedState}" />
-                        <input type="hidden" name="targetYear" th:value="${selectedYear}" />
-                        <input type="hidden" name="targetLGA" th:value="${selectedLGA}" />
-                        <input type="hidden" name="targetStatus" th:value="${selectedStatus}" />
-                        <input type="hidden" name="targetAge" th:value="${selectedAge}" />
-                        <input type="hidden" name="targetGender" th:value="${selectedGender}" />
-                        <input type="hidden" name="targetEduType" th:value="${selectedEduType}" />
-                        <div th:if="${selectedEduType == 'Education'}">
-                            <label for="targetEduLevel">Education Level:</label>
-                            <select name="targetEduLevel" id="targetEduLevel" onchange="this.form.submit()">
-                                <option value="none" th:selected="${selectedEduLevel == null or selectedEduLevel == 'none'}">-- Select Level --</option>
-                                <th:block th:each="edu : ${educationLevels}">
-                                    <option th:value="${edu.levelID}"
-                                            th:text="${edu.level}"
-                                            th:selected="${edu.levelID == selectedEduLevel}"></option>
-                                </th:block>
-                            </select>
-                        </div>
-                        <div th:if="${selectedEduType == 'NonSchoolEdu'}">
-                            <label for="targetEduLevel">Non-School Degree:</label>
-                            <select name="targetEduLevel" id="targetEduLevel" onchange="this.form.submit()">
-                                <option value="none" th:selected="${selectedEduLevel == null or selectedEduLevel == 'none'}">-- Select Degree --</option>
-                                <th:block th:each="ns : ${nonSchoolLevels}">
-                                    <option th:value="${ns.dCID}"
-                                            th:text="${ns.name}"
-                                            th:selected="${ns.dCID == selectedEduLevel}"></option>
-                                </th:block>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <!-- Final filter button only appears when all selections are made -->
-                <div th:if="${selectedEduLevel != null and selectedEduLevel != 'none'}">
-                    <form id="filterForm" method="POST" action="/page2B.html">
-                        <input type="hidden" name="targetState" th:value="${selectedState}" />
-                        <input type="hidden" name="targetYear" th:value="${selectedYear}" />
-                        <input type="hidden" name="targetLGA" th:value="${selectedLGA}" />
-                        <input type="hidden" name="targetStatus" th:value="${selectedStatus}" />
-                        <input type="hidden" name="targetAge" th:value="${selectedAge}" />
-                        <input type="hidden" name="targetGender" th:value="${selectedGender}" />
-                        <input type="hidden" name="targetEduType" th:value="${selectedEduType}" />
-                        <input type="hidden" name="targetEduLevel" th:value="${selectedEduLevel}" />
-                        <button type="submit">Filter</button>
-                    </form>
+                    <label for="targetStatus">Indigenous Status:</label>
+                    <select name="targetStatus" id="targetStatus">
+                        <option value="none" th:selected="${selectedStatus == null or selectedStatus == 'none'}">-- Select Status --</option>
+                        <th:block th:each="status : ${statusList}">
+                            <option th:value="${status.statusID}"
+                                    th:text="${status.statusName}"
+                                    th:selected="${status.statusID == selectedStatus}"></option>
+                        </th:block>
+                    </select>
+                    <label for="targetAge">Age Group:</label>
+                    <select name="targetAge" id="targetAge">
+                        <option value="none" th:selected="${selectedAge == null or selectedAge == 'none'}">-- Select Age --</option>
+                        <th:block th:each="age : ${ages}">
+                            <option th:value="${age.ageID}"
+                                    th:text="${age.ageStart == 65} ? ${age.ageStart} + ' and over' : ${age.ageStart} + ' - ' + ${age.ageEnd}"
+                                    th:selected="${selectedAge != null and selectedAge != 'none' and age.ageID == selectedAge}"></option>
+                        </th:block>
+                    </select>
+                    <label for="targetGender">Gender:</label>
+                    <select name="targetGender" id="targetGender">
+                        <option value="none" th:selected="${selectedGender == null or selectedGender == 'none'}">-- Select Gender --</option>
+                        <th:block th:each="gender : ${genders}">
+                            <option th:value="${gender.sexID}"
+                                    th:text="${gender.sex}"
+                                    th:selected="${gender.sexID == selectedGender}"></option>
+                        </th:block>
+                    </select>
+                    <!-- Education Level/Non-School Degree only appears when Education Type is chosen -->
+                    <div th:if="${selectedEduType == 'Education'}">
+                        <label for="targetEduLevel">Education Level:</label>
+                        <select name="targetEduLevel" id="targetEduLevel">
+                            <option value="none" th:selected="${selectedEduLevel == null or selectedEduLevel == 'none'}">-- Select Level --</option>
+                            <th:block th:each="edu : ${educationLevels}">
+                                <option th:value="${edu.levelID}"
+                                        th:text="${edu.level}"
+                                        th:selected="${edu.levelID == selectedEduLevel}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+                    <div th:if="${selectedEduType == 'NonSchoolEdu'}">
+                        <label for="targetEduLevel">Non-School Degree:</label>
+                        <select name="targetEduLevel" id="targetEduLevel">
+                            <option value="none" th:selected="${selectedEduLevel == null or selectedEduLevel == 'none'}">-- Select Degree --</option>
+                            <th:block th:each="ns : ${nonSchoolLevels}">
+                                <option th:value="${ns.dCID}"
+                                        th:text="${ns.name}"
+                                        th:selected="${ns.dCID == selectedEduLevel}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+                    <button type="submit">Filter</button>
                 </div>
             </form>
+        </div>
+
+        <div>
+            <h2>Education Data</h2>
+            <div th:if="${eduList == null or eduList.isEmpty()}">
+                <p>Please select all mandatory filters and click Filter to view education data.</p>
+            </div>
+            <div th:if="${eduList != null and !eduList.isEmpty()}">
+                <table border="1" cellpadding="6" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>LGA Name</th>
+                            <th>Sex</th>
+                            <th>Status</th>
+                            <th th:text="${selectedEduType == 'Education'} ? 'Education Level' : 'Non-School Degree'"></th>
+                            <th>Population Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <th:block th:each="e : ${eduList}">
+                            <tr>
+                                <td th:text="${e.lgaName}"></td>
+                                <td th:text="${e.sex}"></td>
+                                <td th:text="${e.status}"></td>
+                                <td th:text="${e.disease}"></td>
+                                <td th:text="${e.populationValue}"></td>
+                            </tr>
+                        </th:block>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     <div class='footer'>

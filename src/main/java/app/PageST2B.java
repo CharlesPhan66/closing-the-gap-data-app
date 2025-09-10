@@ -69,8 +69,24 @@ public class PageST2B implements Handler {
         model.put("selectedEduType", chosenEduType);
         model.put("selectedEduLevel", chosenEduLevel);
 
+        ArrayList<Health> eduList = new ArrayList<>();
+        if ("POST".equalsIgnoreCase(context.method()) &&
+            chosenState != null && !chosenState.equals("none") &&
+            chosenYear != null && !chosenYear.equals("none") &&
+            chosenLGA != null && !chosenLGA.equals("none")) {
+            eduList = jdbc.getEducationByFilter(
+                chosenYear,
+                chosenLGA,
+                chosenGender,
+                chosenStatus,
+                chosenAge,
+                chosenEduType,
+                (chosenEduLevel != null && !chosenEduLevel.equals("none")) ? chosenEduLevel : null
+            );
+        }
+        model.put("eduList", eduList);
+
         // DO NOT MODIFY THIS
-        // Makes Javalin render the webpage
         context.render(TEMPLATE, model);
     }
 
