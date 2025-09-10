@@ -19,54 +19,96 @@
     </div>
     <div class='content'>
         <p>Subtask 2.A page content</p>
-        <div>
-            <h2>List of LGAs</h2>
-            <ul>
-                <th:block th:each="lga : ${lgas}">
-                    <li th:text="${lga.name}"></li>
-                </th:block>
-            </ul>
-        </div>
-        <div>
-            <h2>Indigenous Status List</h2>
-            <ul>
-                <th:block th:each="status : ${statusList}">
-                    <li th:text="${status.statusName}"></li>
-                </th:block>
-            </ul>
-        </div>
-        <div>
-            <h2>State List</h2>
-            <ul>
+        
+        <form id="submitStateForm" method="POST" action="/page2A.html">
+            <select name="targetState" id="targetState">
+                <option value="none" th:selected="${selectedState == null or selectedState == 'none'}">-- Select State --</option>
                 <th:block th:each="state : ${states}">
-                    <li th:text="${state.name}"></li>
+                    <option th:value="${state.code}"
+                            th:text="${state.name}"
+                            th:selected="${state.code.toString() == selectedState}">
+                    </option>
                 </th:block>
-            </ul>
+            </select>
+         <input type="submit" value="Select State"/>
+        </form>
+
+        <div th:if = "${selectedState} != null">
+        <form method="POST" action="/page2A.html">
+            <input type="hidden" name="targetState" th:value="${selectedState}" />
+            <select name="targetYear" id="targetYear">
+                <option value="none" th:selected="${selectedYear == null or selectedYear == 'none'}">-- Select Year --</option>
+                <option value="2016" th:selected="${selectedYear == '2016'}">2016</option>
+                <option value="2021" th:selected="${selectedYear == '2021'}">2021</option>
+            </select>
+            <input type="submit" value="Select Year"/>
+        </form>
+        </div>
+
+        <div th:if = "(selectedState != null) and (selectedYear != null)">
+            
+        <form method="POST" action="/page2A.html">
+            <input type="hidden" name="targetState" th:value="${selectedState}" />
+            <input type="hidden" name="targetYear" th:value="${selectedYear}" />
+            <select name="targetLGA" id="targetLGA">
+                <option value="none" th:selected="${selectedLGA == null or selectedLGA == 'none'}">-- Select LGA --</option>
+               <option  th:each = "lga: ${lgasInState}"
+                        th:text = "${lga.name}" 
+                        th:value = "${lga.code}"
+                        th:selected = "${lga.code == selectedLGA}">
+               </option>
+            </select>
+            <input type="submit" value="Select LGA"/>
+        </form>
         </div>
         <div>
-            <h2>Age List</h2>
-            <ul>
+            <label for="targetStatus">Indigenous Status:</label>
+            <select name="targetStatus" id="targetStatus">
+                <option value="none" th:selected="${selectedStatus == null or selectedStatus == 'none'}">-- Select Status --</option>
+                <th:block th:each="status : ${statusList}">
+                    <option th:value="${status.statusID}"
+                            th:text="${status.statusName}"
+                            th:selected="${status.statusID == selectedStatus}"></option>
+                </th:block>
+            </select>
+        </div>
+        <div>
+            <label for="targetAge">Age Group:</label>
+            <select name="targetAge" id="targetAge">
+                <option value="none" th:selected="${selectedAge == null or selectedAge == 'none'}">-- Select Age --</option>
                 <th:block th:each="age : ${ages}">
-                <li th:text="${age.ageStart == 65} ? ${age.ageStart} + ' and over' : ${age.ageStart} + ' - ' + ${age.ageEnd}"></li>
+                    <option th:value="${age.ageID}"
+                            th:text="${age.ageStart == 65} ? ${age.ageStart} + ' and over' : ${age.ageStart} + ' - ' + ${age.ageEnd}"
+                            th:selected="${age.ageID == selectedAge}"></option>
                 </th:block>
-            </ul>
+            </select>
         </div>
         <div>
-            <h2>Gender List</h2>
-            <ul>
+            <label for="targetGender">Gender:</label>
+            <select name="targetGender" id="targetGender">
+                <option value="none" th:selected="${selectedGender == null or selectedGender == 'none'}">-- Select Gender --</option>
                 <th:block th:each="gender : ${genders}">
-                <li th:text="${gender.sex}"></li>
+                    <option th:value="${gender.sexID}"
+                            th:text="${gender.sex}"
+                            th:selected="${gender.sexID == selectedGender}"></option>
                 </th:block>
-            </ul>
+            </select>
         </div>
         <div>
-            <h2>Health Conditions List</h2>
-            <ul>
+            <label for="targetCondition">Health Condition:</label>
+            <select name="targetCondition" id="targetCondition">
+                <option value="none" th:selected="${selectedCondition == null or selectedCondition == 'none'}">-- Select Condition --</option>
                 <th:block th:each="condition : ${conditions}">
-                <li th:text="${condition.diseaseName}"></li>
+                    <option th:value="${condition.conditionID}"
+                            th:text="${condition.diseaseName}"
+                            th:selected="${condition.conditionID == selectedCondition}"></option>
                 </th:block>
-            </ul>
+            </select>
         </div>
+        <div>
+            <button type="submit">Filter</button>
+        </div>
+
     </div>
     <div class='footer'>
         <p>COSC3056 - Studio Project Starter Code</p>

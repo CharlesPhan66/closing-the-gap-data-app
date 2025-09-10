@@ -17,6 +17,44 @@ import java.sql.Statement;
  */
 public class JDBCConnection {
     /**
+     * Get all the LGAs of a specific State.
+     * @return ArrayList of LGA objects
+     */
+    public ArrayList<LGA> getLGAsByState(String stateID, String year) {
+        ArrayList<LGA> lgas = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            String query = String.format(
+                "SELECT lgaCode, lgaName " +
+                "FROM LGA JOIN States ON LGA.stateID = States.stateID " +
+                "WHERE States.stateID = %s AND year=%s",
+                stateID, year
+            );
+            ResultSet results = statement.executeQuery(query);
+            while (results.next()) {
+                String code = results.getString("lgaCode");
+                String name = results.getString("lgaName");
+                LGA lga = new LGA(code, name, Integer.parseInt(year));
+                lgas.add(lga);
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return lgas;
+    }
+    /**
      * Get all health conditions in the database.
      * @return ArrayList of HealthCondition objects
      */
@@ -62,11 +100,12 @@ public class JDBCConnection {
             connection = DriverManager.getConnection(DATABASE);
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-            String query = "SELECT name FROM States";
+            String query = "SELECT stateID, name FROM States";
             ResultSet results = statement.executeQuery(query);
             while (results.next()) {
+                String stateID = results.getString("stateID");
                 String stateName = results.getString("name");
-                State state = new State();
+                State state = new State(stateID, stateName);
                 state.setName(stateName);
                 states.add(state);
             }
