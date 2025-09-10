@@ -115,6 +115,7 @@
                     <table border="1" cellpadding="6" cellspacing="0">
                         <thead>
                             <tr>
+                                <th th:if="${healthList[0].stateName != null}">State Name</th>
                                 <th th:if="${healthList[0].lgaName != null}">LGA Name</th>
                                 <th th:if="${healthList[0].sex != null}">Sex</th>
                                 <th th:if="${healthList[0].status != null}">Status</th>
@@ -125,6 +126,7 @@
                         <tbody>
                             <th:block th:each="h : ${healthList}">
                                 <tr>
+                                    <td th:if="${h.stateName != null}" th:text="${h.stateName}"></td>
                                     <td th:if="${h.lgaName != null}" th:text="${h.lgaName}"></td>
                                     <td th:if="${h.sex != null}" th:text="${h.sex}"></td>
                                     <td th:if="${h.status != null}" th:text="${h.status}"></td>

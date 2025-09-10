@@ -1,6 +1,7 @@
 package app;
 
 public class Health {
+    private String stateName;
     private String lgaName;
     private String sex;
     private String status;
@@ -9,12 +10,27 @@ public class Health {
 
     public Health() {}
 
-    public Health(String lgaName, String sex, String status, String disease, int populationValue) {
+    // Constructor for all fields
+    public Health(String stateName, String lgaName, String sex, String status, String disease, int populationValue) {
+        this.stateName = stateName;
         this.lgaName = lgaName;
         this.sex = sex;
         this.status = status;
         this.disease = disease;
         this.populationValue = populationValue;
+    }
+
+    // Backward compatible constructor
+    public Health(String lgaName, String sex, String status, String disease, int populationValue) {
+        this(null, lgaName, sex, status, disease, populationValue);
+    }
+
+    public String getStateName() {
+        return stateName;
+    }
+
+    public void setStateName(String stateName) {
+        this.stateName = stateName;
     }
 
     public String getLgaName() {
@@ -56,7 +72,6 @@ public class Health {
     public void setPopulationValue(int populationValue) {
         this.populationValue = populationValue;
     }
-
     
 
 }

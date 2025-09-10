@@ -22,7 +22,7 @@ public class JDBCConnection {
      * if any filter is null, instead of listing all records for that filter, using aggregate the populationValue.
      * Example: if statusID is null, then get total populationValue for all statusID.
      */
-    public ArrayList<Health> getHealthSummaryByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID) {
+    public ArrayList<Health> getHealthSummaryByFilters(String year, String stateID, String lgaCode, String sexID, String statusID, String conditionID) {
         ArrayList<Health> healthSummaryList = new ArrayList<>();
         Connection connection = null;
         try {
@@ -32,8 +32,16 @@ public class JDBCConnection {
             // Build SELECT and GROUP BY dynamically for summary mode
             ArrayList<String> selectFields = new ArrayList<>();
             ArrayList<String> groupByFields = new ArrayList<>();
-            selectFields.add("l.lgaName");
-            groupByFields.add("l.lgaName");
+            boolean groupByLGA = (lgaCode != null && !lgaCode.equals("none"));
+            boolean groupByState = (lgaCode == null || lgaCode.equals("none"));
+            if (groupByLGA) {
+                selectFields.add("l.lgaName");
+                groupByFields.add("l.lgaName");
+            }
+            if (groupByState) {
+                selectFields.add("stt.name AS stateName");
+                groupByFields.add("stt.name");
+            }
             boolean groupSex = (sexID == null || sexID.equals("none"));
             boolean groupStatus = (statusID == null || statusID.equals("none"));
             boolean groupDisease = (conditionID == null || conditionID.equals("none"));
@@ -54,6 +62,7 @@ public class JDBCConnection {
             query.append("SELECT ").append(String.join(", ", selectFields)).append(" ");
             query.append("FROM Health h ");
             query.append("JOIN LGA l ON h.lgaCode = l.lgaCode AND h.year = l.year ");
+            query.append("JOIN States stt ON l.stateID = stt.stateID ");
             query.append("JOIN Sex s ON h.sexID = s.sexID ");
             query.append("JOIN indigStatus st ON h.statusID = st.statusID ");
             query.append("JOIN healthCondition hC ON h.conditionID = hC.conditionID ");
@@ -63,6 +72,8 @@ public class JDBCConnection {
             }
             if (lgaCode != null && !lgaCode.equals("none")) {
                 query.append("AND h.lgaCode='").append(lgaCode).append("' ");
+            } else if (stateID != null && !stateID.equals("none")) {
+                query.append("AND stt.stateID='").append(stateID).append("' ");
             }
             if (!groupSex) {
                 query.append("AND h.sexID='").append(sexID).append("' ");
@@ -76,12 +87,13 @@ public class JDBCConnection {
             query.append("GROUP BY ").append(String.join(", ", groupByFields));
             ResultSet results = statement.executeQuery(query.toString());
             while (results.next()) {
-                String lgaName = results.getString("lgaName");
+                String stateName = hasColumn(results, "stateName") ? results.getString("stateName") : null;
+                String lgaName = hasColumn(results, "lgaName") ? results.getString("lgaName") : null;
                 int totalPopulation = results.getInt("totalPopulation");
                 String sex = hasColumn(results, "sex") ? results.getString("sex") : null;
                 String status = hasColumn(results, "status") ? results.getString("status") : null;
                 String diseaseName = hasColumn(results, "diseaseName") ? results.getString("diseaseName") : null;
-                Health health = new Health(lgaName, sex, status, diseaseName, totalPopulation);
+                Health health = new Health(stateName, lgaName, sex, status, diseaseName, totalPopulation);
                 healthSummaryList.add(health);
             }
             statement.close();

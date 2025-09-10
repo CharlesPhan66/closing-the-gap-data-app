@@ -17,10 +17,10 @@ public class PageST2A implements Handler {
     @Override
     public void handle(Context context) throws Exception {
         // Get user input from the form (if any)
-        String chosenYear = context.formParam("targetYear");
-        String chosenLGA = context.formParam("targetLGA");
-        String chosenStatus = context.formParam("targetStatus");
-        String chosenState = context.formParam("targetState");
+    String chosenYear = context.formParam("targetYear");
+    String chosenLGA = context.formParam("targetLGA");
+    String chosenStatus = context.formParam("targetStatus");
+    String chosenState = context.formParam("targetState");
         // String chosenAge = context.formParam("targetAge");
         String chosenGender = context.formParam("targetGender");
         String chosenCondition = context.formParam("targetCondition");
@@ -73,14 +73,15 @@ public class PageST2A implements Handler {
          model.put("selectedCondition", chosenCondition);
 
         ArrayList<Health> healthList = new ArrayList<>();
-        // Show table if State, Year, and LGA are selected
+        // Show table if State and Year are selected (LGA optional)
         if (chosenState != null && !chosenState.equals("none") &&
-            chosenYear != null && !chosenYear.equals("none") &&
-            chosenLGA != null && !chosenLGA.equals("none")) {
+            chosenYear != null && !chosenYear.equals("none")) {
             if (mode.equals("summary")) {
-                healthList = jdbc.getHealthSummaryByFilters(chosenYear, chosenLGA, chosenGender, chosenStatus, chosenCondition);
+                healthList = jdbc.getHealthSummaryByFilters(chosenYear, chosenState, chosenLGA, chosenGender, chosenStatus, chosenCondition);
             } else {
-                healthList = jdbc.getHealthByFilters(chosenYear, chosenLGA, chosenGender, chosenStatus, chosenCondition);
+                // If LGA is selected, filter by LGA; otherwise, show all LGAs in the State
+                String lgaParam = (chosenLGA != null && !chosenLGA.equals("none")) ? chosenLGA : null;
+                healthList = jdbc.getHealthByFilters(chosenYear, lgaParam, chosenGender, chosenStatus, chosenCondition);
             }
         }
         model.put("healthList", healthList);
