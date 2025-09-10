@@ -281,4 +281,59 @@ public class JDBCConnection {
         // Finally we return all of the persona
         return persona;
     }
+
+    public ArrayList<Priorities> getPriorities() {
+        // Create the ArrayList of Priority objects to return
+        ArrayList<Priorities> priorities = new ArrayList<Priorities>();
+
+        // Setup the variable for the JDBC connection
+        Connection connection = null;
+
+        try {
+            // Connect to JDBC data base
+            connection = DriverManager.getConnection(DATABASE);
+
+            // Prepare a new SQL Query & Set a timeout
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // The Query
+            String query = "SELECT priorityID, description FROM PRIORITIES";
+            
+            // Get Result
+            ResultSet results = statement.executeQuery(query);
+
+            // Process all of the results
+            while (results.next()) {
+                // Lookup the columns we need
+                String priorityID     = results.getString("priorityID");
+                String description  = results.getString("description");
+
+                // Create a Priority Object
+                Priorities pr = new Priorities(priorityID, description);
+
+                // Add the priority object to the array
+                priorities.add(pr);
+            }
+
+            // Close the statement because we are done with it
+            statement.close();
+        } catch (SQLException e) {
+            // If there is an error, lets just pring the error
+            System.err.println(e.getMessage());
+        } finally {
+            // Safety code to cleanup
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                // connection close failed.
+                System.err.println(e.getMessage());
+            }
+        }
+
+        // Finally we return all of the priorities
+        return priorities;
+    }
 }

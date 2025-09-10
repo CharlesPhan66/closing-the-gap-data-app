@@ -42,6 +42,9 @@ public class PageMission implements Handler {
         ArrayList<Persona> persona = jdbc.getPersona();
         model.put("persona", persona);
 
+        ArrayList<Priorities> priorities = jdbc.getPriorities();
+        model.put("priorities", priorities);
+
         // DO NOT MODIFY THIS
         // Makes Javalin render the webpage
         context.render(TEMPLATE, model);

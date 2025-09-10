@@ -23,10 +23,16 @@
         <h1>Subtask 1.B</h1>
     </div>
     <div class="content">
+        <h2>List of Priorities</h2>
+        <ul>
+            <th:block th:each="priorities : ${priorities}">
+                <li th:text="${priorities.description}"></li>
+            </th:block>
+        </ul>
         <h2>List of Members</h2>
         <ul>
             <th:block th:each="member : ${members}">
-                <li th:text="${member.name}"></li>
+                <li th:text="${member.name + ' (' + member.code + ')'}"></li>
             </th:block>
         </ul>
         <h2>Persona Information</h2>
