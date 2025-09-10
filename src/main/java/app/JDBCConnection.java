@@ -344,5 +344,79 @@ public class JDBCConnection {
         return sexList;
     }
 
+    /**
+     * Get all education levels from the Edu table.
+     * @return ArrayList of Education objects
+     */
+    public ArrayList<Education> getEducation() {
+        ArrayList<Education> educationList = new ArrayList<>();
+        Connection connection = null;
+
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            String query = "SELECT levelID, level FROM Edu";
+            ResultSet results = statement.executeQuery(query);
+
+            while (results.next()) {
+                String levelID = results.getString("levelID");
+                String level = results.getString("level");
+                Education education = new Education(levelID, level);
+                educationList.add(education);
+            }
+
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return educationList;
+    }
+
+    /**
+     * Get all non-school education degree types from nonSchool table.
+     * @return ArrayList of NonSchoolEdu objects
+     */
+    public ArrayList<NonSchoolEdu> getNonSchoolEdu() {
+        ArrayList<NonSchoolEdu> degreeList = new ArrayList<>();
+        Connection connection = null;
+
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            String query = "SELECT d_cID, name FROM nonSchool";
+            ResultSet results = statement.executeQuery(query);
+
+            while (results.next()) {
+                String d_cID = results.getString("d_cID");
+                String name = results.getString("name");
+                NonSchoolEdu degree = new NonSchoolEdu(d_cID, name);
+                degreeList.add(degree);
+            }
+
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return degreeList;
+    }
+
     // TODO: Add your required methods here
 }
