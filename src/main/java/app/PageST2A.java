@@ -24,6 +24,10 @@ public class PageST2A implements Handler {
         // String chosenAge = context.formParam("targetAge");
         String chosenGender = context.formParam("targetGender");
         String chosenCondition = context.formParam("targetCondition");
+        String mode = context.formParam("mode");
+        if (mode == null || (!mode.equals("summary") && !mode.equals("detail"))) {
+            mode = "detail";
+        }
         System.out.println("Chosen State: " + chosenState);
         System.out.println("Chosen Year: " + chosenYear);
         System.out.println("Chosen LGA: " + chosenLGA);
@@ -31,6 +35,7 @@ public class PageST2A implements Handler {
         // System.out.println("Chosen Age: " + chosenAge);
         System.out.println("Chosen Gender: " + chosenGender);
         System.out.println("Chosen Condition: " + chosenCondition);
+        System.out.println("Mode: " + mode);
         
         // Create the model to pass to Thymeleaf
         Map<String, Object> model = new HashMap<>();
@@ -72,9 +77,14 @@ public class PageST2A implements Handler {
         if (chosenState != null && !chosenState.equals("none") &&
             chosenYear != null && !chosenYear.equals("none") &&
             chosenLGA != null && !chosenLGA.equals("none")) {
-            healthList = jdbc.getHealthByFilters(chosenYear, chosenLGA, chosenGender, chosenStatus, chosenCondition);
+            if (mode.equals("summary")) {
+                healthList = jdbc.getHealthSummaryByFilters(chosenYear, chosenLGA, chosenGender, chosenStatus, chosenCondition);
+            } else {
+                healthList = jdbc.getHealthByFilters(chosenYear, chosenLGA, chosenGender, chosenStatus, chosenCondition);
+            }
         }
         model.put("healthList", healthList);
+        model.put("mode", mode);
 
 
     context.render(TEMPLATE, model);

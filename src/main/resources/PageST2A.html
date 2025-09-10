@@ -47,6 +47,13 @@
 
         <div th:if = "(selectedState != null) and (selectedYear != null)">
         <form method="POST" action="/page2A.html">
+            <div style="margin-bottom: 1em;">
+                <label><b>Mode:</b></label>
+                <input type="radio" id="detailMode" name="mode" value="detail" th:checked="${mode == null or mode == 'detail'}">
+                <label for="detailMode">Detail</label>
+                <input type="radio" id="summaryMode" name="mode" value="summary" th:checked="${mode == 'summary'}">
+                <label for="summaryMode">Summary</label>
+            </div>
             <input type="hidden" name="targetState" th:value="${selectedState}" />
             <input type="hidden" name="targetYear" th:value="${selectedYear}" />
             <div>
@@ -108,20 +115,20 @@
                     <table border="1" cellpadding="6" cellspacing="0">
                         <thead>
                             <tr>
-                                <th>LGA Name</th>
-                                <th>Sex</th>
-                                <th>Status</th>
-                                <th>Disease</th>
+                                <th th:if="${healthList[0].lgaName != null}">LGA Name</th>
+                                <th th:if="${healthList[0].sex != null}">Sex</th>
+                                <th th:if="${healthList[0].status != null}">Status</th>
+                                <th th:if="${healthList[0].disease != null}">Disease</th>
                                 <th>Population Value</th>
                             </tr>
                         </thead>
                         <tbody>
                             <th:block th:each="h : ${healthList}">
                                 <tr>
-                                    <td th:text="${h.lgaName}"></td>
-                                    <td th:text="${h.sex}"></td>
-                                    <td th:text="${h.status}"></td>
-                                    <td th:text="${h.disease}"></td>
+                                    <td th:if="${h.lgaName != null}" th:text="${h.lgaName}"></td>
+                                    <td th:if="${h.sex != null}" th:text="${h.sex}"></td>
+                                    <td th:if="${h.status != null}" th:text="${h.status}"></td>
+                                    <td th:if="${h.disease != null}" th:text="${h.disease}"></td>
                                     <td th:text="${h.populationValue}"></td>
                                 </tr>
                             </th:block>

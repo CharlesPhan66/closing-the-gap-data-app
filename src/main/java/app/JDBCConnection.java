@@ -2,6 +2,7 @@ package app;
 
 import java.util.ArrayList;
 import java.lang.StringBuilder;
+import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -16,6 +17,96 @@ import java.sql.Statement;
  * @author Santha Sumanasekara, 2021. email: santha.sumanasekara@rmit.edu.au
  */
 public class JDBCConnection {
+    /**
+     * Get Health records summarized by demographics.
+     * if any filter is null, instead of listing all records for that filter, using aggregate the populationValue.
+     * Example: if statusID is null, then get total populationValue for all statusID.
+     */
+    public ArrayList<Health> getHealthSummaryByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID) {
+        ArrayList<Health> healthSummaryList = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            // Build SELECT and GROUP BY dynamically for summary mode
+            ArrayList<String> selectFields = new ArrayList<>();
+            ArrayList<String> groupByFields = new ArrayList<>();
+            selectFields.add("l.lgaName");
+            groupByFields.add("l.lgaName");
+            boolean groupSex = (sexID == null || sexID.equals("none"));
+            boolean groupStatus = (statusID == null || statusID.equals("none"));
+            boolean groupDisease = (conditionID == null || conditionID.equals("none"));
+            if (!groupSex) {
+                selectFields.add("s.sex");
+                groupByFields.add("s.sex");
+            }
+            if (!groupStatus) {
+                selectFields.add("st.status");
+                groupByFields.add("st.status");
+            }
+            if (!groupDisease) {
+                selectFields.add("hC.diseaseName");
+                groupByFields.add("hC.diseaseName");
+            }
+            selectFields.add("SUM(h.populationValue) AS totalPopulation");
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT ").append(String.join(", ", selectFields)).append(" ");
+            query.append("FROM Health h ");
+            query.append("JOIN LGA l ON h.lgaCode = l.lgaCode AND h.year = l.year ");
+            query.append("JOIN Sex s ON h.sexID = s.sexID ");
+            query.append("JOIN indigStatus st ON h.statusID = st.statusID ");
+            query.append("JOIN healthCondition hC ON h.conditionID = hC.conditionID ");
+            query.append("WHERE 1=1 ");
+            if (year != null && !year.equals("none")) {
+                query.append("AND h.year='").append(year).append("' ");
+            }
+            if (lgaCode != null && !lgaCode.equals("none")) {
+                query.append("AND h.lgaCode='").append(lgaCode).append("' ");
+            }
+            if (!groupSex) {
+                query.append("AND h.sexID='").append(sexID).append("' ");
+            }
+            if (!groupStatus) {
+                query.append("AND h.statusID='").append(statusID).append("' ");
+            }
+            if (!groupDisease) {
+                query.append("AND h.conditionID='").append(conditionID).append("' ");
+            }
+            query.append("GROUP BY ").append(String.join(", ", groupByFields));
+            ResultSet results = statement.executeQuery(query.toString());
+            while (results.next()) {
+                String lgaName = results.getString("lgaName");
+                int totalPopulation = results.getInt("totalPopulation");
+                String sex = hasColumn(results, "sex") ? results.getString("sex") : null;
+                String status = hasColumn(results, "status") ? results.getString("status") : null;
+                String diseaseName = hasColumn(results, "diseaseName") ? results.getString("diseaseName") : null;
+                Health health = new Health(lgaName, sex, status, diseaseName, totalPopulation);
+                healthSummaryList.add(health);
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return healthSummaryList;
+    }
+
+        // Helper method to check if a column exists in the ResultSet
+        private boolean hasColumn(ResultSet rs, String columnName) {
+            try {
+                return rs.findColumn(columnName) > 0;
+            } catch (SQLException e) {
+                return false;
+            }
+        }
     /**
      * Get Health records by filters: year, lgaCode, sexID, statusID
      * Any filter can be null to ignore that filter.
