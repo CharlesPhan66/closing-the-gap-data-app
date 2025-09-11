@@ -32,7 +32,7 @@ public class JDBCConnection {
      * Example: if statusID is null, then get total populationValue for all statusID.
      * @author @charlesphan0206
      */
-    public ArrayList<Health> getHealthSummaryByFilters(String year, String stateID, String lgaCode, String sexID, String statusID, String conditionID) {
+    public ArrayList<Health> getHealthSummaryByFilters(String year, String stateID, String lgaCode, String sexID, String statusID, String conditionID, String orderByClause, Integer limit) {
         ArrayList<Health> healthSummaryList = new ArrayList<>();
         Connection connection = null;
         try {
@@ -95,7 +95,59 @@ public class JDBCConnection {
                 query.append("AND h.conditionID='").append(conditionID).append("' ");
             }
             query.append("GROUP BY ").append(String.join(", ", groupByFields));
-            ResultSet results = statement.executeQuery(query.toString());
+            // If an ORDER BY is requested, use a CTE to compute the aggregates then apply ROW_NUMBER() over the requested ordering.
+            boolean hasOrder = (orderByClause != null && !orderByClause.trim().isEmpty());
+            String finalQuery;
+            if (hasOrder) {
+                // sanitize orderByClause so it references columns available in the outer SELECT from the CTE
+                String sanitizedOrder = orderByClause;
+                // Replace CAST(SUM(h.populationValue) AS REAL) with CAST(totalPopulation AS REAL)
+                sanitizedOrder = sanitizedOrder.replaceAll("(?i)CAST\\(SUM\\(h\\.populationValue\\) AS REAL\\)", "CAST(totalPopulation AS REAL)");
+                // Replace SUM(h.populationValue) with totalPopulation
+                sanitizedOrder = sanitizedOrder.replaceAll("(?i)SUM\\(h\\.populationValue\\)", "totalPopulation");
+                // Remove h. prefix references (e.g., h.populationValue -> populationValue)
+                sanitizedOrder = sanitizedOrder.replaceAll("(?i)h\\.", "");
+                StringBuilder cte = new StringBuilder();
+                cte.append("WITH summary AS (\n");
+                cte.append("  SELECT ").append(String.join(", ", selectFields)).append(", SUM(h.populationValue) AS totalPopulation\n");
+                cte.append("  FROM Health h \n");
+                cte.append("  JOIN LGA l ON h.lgaCode = l.lgaCode AND h.year = l.year \n");
+                cte.append("  JOIN States stt ON l.stateID = stt.stateID \n");
+                cte.append("  JOIN Sex s ON h.sexID = s.sexID \n");
+                cte.append("  JOIN indigStatus st ON h.statusID = st.statusID \n");
+                cte.append("  JOIN healthCondition hC ON h.conditionID = hC.conditionID \n");
+                cte.append("  WHERE 1=1 \n");
+                if (year != null && !year.equals("none")) {
+                    cte.append(" AND h.year='").append(year).append("' \n");
+                }
+                if (lgaCode != null && !lgaCode.equals("none")) {
+                    cte.append(" AND h.lgaCode='").append(lgaCode).append("' \n");
+                } else if (stateID != null && !stateID.equals("none")) {
+                    cte.append(" AND stt.stateID='").append(stateID).append("' \n");
+                }
+                if (!groupSex) {
+                    cte.append(" AND h.sexID='").append(sexID).append("' \n");
+                }
+                if (!groupStatus) {
+                    cte.append(" AND h.statusID='").append(statusID).append("' \n");
+                }
+                if (!groupDisease) {
+                    cte.append(" AND h.conditionID='").append(conditionID).append("' \n");
+                }
+                cte.append("  GROUP BY ").append(String.join(", ", groupByFields)).append("\n");
+                cte.append(")\n");
+                cte.append("SELECT *, ROW_NUMBER() OVER (ORDER BY ").append(sanitizedOrder).append(") AS rn FROM summary");
+                if (limit != null && limit > 0) {
+                    cte.append(" LIMIT ").append(limit);
+                }
+                finalQuery = cte.toString();
+            } else {
+                if (limit != null && limit > 0) {
+                    query.append(" LIMIT ").append(limit);
+                }
+                finalQuery = query.toString();
+            }
+            ResultSet results = statement.executeQuery(finalQuery);
             while (results.next()) {
                 String stateName = hasColumn(results, "stateName") ? results.getString("stateName") : null;
                 String lgaName = hasColumn(results, "lgaName") ? results.getString("lgaName") : null;
@@ -104,6 +156,10 @@ public class JDBCConnection {
                 String status = hasColumn(results, "status") ? results.getString("status") : null;
                 String diseaseName = hasColumn(results, "diseaseName") ? results.getString("diseaseName") : null;
                 Health health = new Health(stateName, lgaName, sex, status, diseaseName, totalPopulation);
+                // If rn exists, populate rank
+                if (hasColumn(results, "rn")) {
+                    try { health.setRank(results.getInt("rn")); } catch (SQLException e) { /* ignore */ }
+                }
                 healthSummaryList.add(health);
             }
             statement.close();
@@ -134,7 +190,7 @@ public class JDBCConnection {
      * Any filter can be null to ignore that filter.
      * @author @charlesphan0206
      */
-    public ArrayList<Health> getHealthByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID) {
+    public ArrayList<Health> getHealthByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID, String orderByClause, Integer limit) {
         ArrayList<Health> healthList = new ArrayList<>();
         Connection connection = null;
         try {
@@ -175,7 +231,30 @@ public class JDBCConnection {
             if (conditionID != null && !conditionID.equals("none")) {
                 query.append(" AND h.conditionID='").append(conditionID).append("'");
             }
-            ResultSet results = statement.executeQuery(query.toString());
+            boolean hasOrder = (orderByClause != null && !orderByClause.trim().isEmpty());
+            String finalQuery;
+            if (hasOrder) {
+                // sanitize as above: remove h. and replace population aggregates
+                String sanitizedOrder = orderByClause;
+                sanitizedOrder = sanitizedOrder.replaceAll("(?i)CAST\\(SUM\\(h\\.populationValue\\) AS REAL\\)", "CAST(totalPopulation AS REAL)");
+                sanitizedOrder = sanitizedOrder.replaceAll("(?i)SUM\\(h\\.populationValue\\)", "totalPopulation");
+                sanitizedOrder = sanitizedOrder.replaceAll("(?i)h\\.", "");
+                StringBuilder cte = new StringBuilder();
+                cte.append("WITH detail AS (\n");
+                cte.append(query.toString()).append("\n");
+                if (limit != null && limit > 0) {
+                    cte.append(")\nSELECT *, ROW_NUMBER() OVER (ORDER BY ").append(sanitizedOrder).append(") AS rn FROM detail LIMIT ").append(limit);
+                } else {
+                    cte.append(")\nSELECT *, ROW_NUMBER() OVER (ORDER BY ").append(sanitizedOrder).append(") AS rn FROM detail");
+                }
+                finalQuery = cte.toString();
+            } else {
+                if (limit != null && limit > 0) {
+                    query.append(" LIMIT ").append(limit);
+                }
+                finalQuery = query.toString();
+            }
+            ResultSet results = statement.executeQuery(finalQuery);
             while (results.next()) {
                 String resultLgaName = results.getString("lgaName");
                 String resultSex = results.getString("sex");
@@ -183,6 +262,9 @@ public class JDBCConnection {
                 String resultDisease = results.getString("diseaseName");
                 int populationValue = results.getInt("populationValue");
                 Health health = new Health(resultLgaName, resultSex, resultStatus, resultDisease, populationValue);
+                if (hasColumn(results, "rn")) {
+                    try { health.setRank(results.getInt("rn")); } catch (SQLException e) { /* ignore */ }
+                }
                 healthList.add(health);
             }
             statement.close();

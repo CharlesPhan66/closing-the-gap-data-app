@@ -8,10 +8,10 @@ public class Health {
     private String disease;
     private int populationValue;
     private double percentage;
+    private int rank = 0;
 
     public Health() {}
 
-    // Constructor for all fields
     public Health(String stateName, String lgaName, String sex, String status, String disease, int populationValue) {
         this.stateName = stateName;
         this.lgaName = lgaName;
@@ -21,7 +21,6 @@ public class Health {
         this.populationValue = populationValue;
     }
 
-    // Backward compatible constructor
     public Health(String lgaName, String sex, String status, String disease, int populationValue) {
         this(null, lgaName, sex, status, disease, populationValue);
     }
@@ -32,6 +31,14 @@ public class Health {
 
     public void setPercentage(double percentage) {
         this.percentage = percentage;
+    }
+
+    public int getRank() {
+        return rank;
+    }
+
+    public void setRank(int rank) {
+        this.rank = rank;
     }
 
     public String getFormattedPercentage() {
