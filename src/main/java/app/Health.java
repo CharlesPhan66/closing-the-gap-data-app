@@ -12,7 +12,6 @@ public class Health {
 
     public Health() {}
 
-    // Constructor for all fields
     public Health(String stateName, String lgaName, String sex, String status, String disease, int populationValue) {
         this.stateName = stateName;
         this.lgaName = lgaName;
@@ -22,7 +21,6 @@ public class Health {
         this.populationValue = populationValue;
     }
 
-    // Backward compatible constructor
     public Health(String lgaName, String sex, String status, String disease, int populationValue) {
         this(null, lgaName, sex, status, disease, populationValue);
     }

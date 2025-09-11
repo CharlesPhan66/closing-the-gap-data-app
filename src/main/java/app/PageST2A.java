@@ -193,7 +193,7 @@ public class PageST2A implements Handler {
     // Ranks are provided by the database when ordering is requested; templates should use h.rank
     model.put("topWarning", topWarning);
     model.put("topN", topN);
-        model.put("mode", mode);
+    model.put("mode", mode);
 
 
     context.render(TEMPLATE, model);
