@@ -25,6 +25,12 @@ public class PageST2A implements Handler {
         String chosenGender = context.formParam("targetGender");
         String chosenCondition = context.formParam("targetCondition");
         String mode = context.formParam("mode");
+        String doFilter = context.formParam("doFilter");
+        // doFilter: null (not submitted), "false" (auto-submit for state/year), or "true" (user clicked Filter)
+        boolean showFiltersChanged = false;
+        if (doFilter != null && doFilter.equals("false")) {
+            showFiltersChanged = true;
+        }
         if (mode == null || (!mode.equals("summary") && !mode.equals("detail"))) {
             mode = "detail";
         }
@@ -63,7 +69,7 @@ public class PageST2A implements Handler {
 
 
          
-         // Record the selections that the user made previously
+    // Record the selections that the user made previously
          model.put("selectedYear", chosenYear);
          model.put("selectedLGA", chosenLGA);
          model.put("selectedStatus", chosenStatus);
@@ -72,16 +78,45 @@ public class PageST2A implements Handler {
          model.put("selectedGender", chosenGender);
          model.put("selectedCondition", chosenCondition);
 
-        ArrayList<Health> healthList = new ArrayList<>();
-        // Show table if State and Year are selected (LGA optional)
-        if (chosenState != null && !chosenState.equals("none") &&
+    // expose the flags to the template
+    model.put("doFilter", doFilter == null ? "none" : doFilter);
+    model.put("showFiltersChanged", showFiltersChanged);
+
+    ArrayList<Health> healthList = new ArrayList<>();
+        // Show table only when user explicitly submitted the Filter (doFilter=true)
+        if ("true".equals(doFilter) && chosenState != null && !chosenState.equals("none") &&
             chosenYear != null && !chosenYear.equals("none")) {
+            // compute denominator (either LGA total or State total) for percentage calculation
+            int totalPopulation = 0;
+            try {
+                int yearInt = Integer.parseInt(chosenYear);
+                if (chosenLGA != null && !chosenLGA.equals("none")) {
+                    totalPopulation = jdbc.getTotalPopulationForLGA(chosenLGA, yearInt);
+                } else {
+                    int stateId = Integer.parseInt(chosenState);
+                    totalPopulation = jdbc.getTotalPopulationForState(stateId, yearInt);
+                }
+            } catch (NumberFormatException e) {
+                totalPopulation = 0;
+            }
+
+            model.put("totalPopulation", totalPopulation);
+
             if (mode.equals("summary")) {
                 healthList = jdbc.getHealthSummaryByFilters(chosenYear, chosenState, chosenLGA, chosenGender, chosenStatus, chosenCondition);
             } else {
                 // If LGA is selected, filter by LGA; otherwise, show all LGAs in the State
                 String lgaParam = (chosenLGA != null && !chosenLGA.equals("none")) ? chosenLGA : null;
                 healthList = jdbc.getHealthByFilters(chosenYear, lgaParam, chosenGender, chosenStatus, chosenCondition);
+            }
+
+            // set percentage on each Health object (applies to both summary and detail)
+            for (Health h : healthList) {
+                double pct = 0.0;
+                if (totalPopulation > 0) {
+                    pct = (double) h.getPopulationValue() * 100.0 / (double) totalPopulation;
+                }
+                h.setPercentage(pct);
             }
         }
         model.put("healthList", healthList);

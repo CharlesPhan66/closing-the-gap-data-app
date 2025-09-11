@@ -122,3 +122,18 @@ img.top-image { height: auto; width: auto; max-height: 90px; }
 @media (max-width: 900px) {
    .search-input.big { width: 90%; }
 }
+
+/* Annotation style used by a few pages for small italic helper text */
+.annotation {
+   font-size: 0.78em;
+   font-style: oblique;
+   font-weight: 400;
+}
+.annotation.notice {
+   color: #b35;
+}
+
+/* Utility helper to hide elements until needed */
+.hidden {
+   display: none !important;
+}

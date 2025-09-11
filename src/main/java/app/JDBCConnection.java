@@ -16,11 +16,6 @@ import java.sql.Statement;
  * @author Santha Sumanasekara, 2021. email: santha.sumanasekara@rmit.edu.au
  */
 public class JDBCConnection {
-    /**
-     * Get Health records summarized by demographics.
-     * if any filter is null, instead of listing all records for that filter, using aggregate the populationValue.
-     * Example: if statusID is null, then get total populationValue for all statusID.
-     */
     // Name of database file (contained in database folder)
     public static final String DATABASE = "jdbc:sqlite:database/CTG.db";
     
@@ -30,6 +25,13 @@ public class JDBCConnection {
     public JDBCConnection() {
         System.out.println("Created JDBC Connection Object");
     }
+
+    /**
+     * Get Health records summarized by demographics.
+     * if any filter is null, instead of listing all records for that filter, using aggregate the populationValue.
+     * Example: if statusID is null, then get total populationValue for all statusID.
+     * @author @charlesphan0206
+     */
     public ArrayList<Health> getHealthSummaryByFilters(String year, String stateID, String lgaCode, String sexID, String statusID, String conditionID) {
         ArrayList<Health> healthSummaryList = new ArrayList<>();
         Connection connection = null;
@@ -130,6 +132,7 @@ public class JDBCConnection {
     /**
      * Get Health records by filters: year, lgaCode, sexID, statusID
      * Any filter can be null to ignore that filter.
+     * @author @charlesphan0206
      */
     public ArrayList<Health> getHealthByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID) {
         ArrayList<Health> healthList = new ArrayList<>();
@@ -207,17 +210,22 @@ public class JDBCConnection {
             connection = DriverManager.getConnection(DATABASE);
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
-            String query = String.format(
-                "SELECT lgaCode, lgaName " +
-                "FROM LGA JOIN States ON LGA.stateID = States.stateID " +
-                "WHERE States.stateID = %s AND year=%s",
-                stateID, year
-            );
+            StringBuilder qb = new StringBuilder();
+            qb.append("SELECT lgaCode, lgaName FROM LGA JOIN States ON LGA.stateID = States.stateID WHERE 1=1 ");
+            if (stateID != null && !stateID.equals("none")) {
+                qb.append(" AND States.stateID = '").append(stateID).append("'");
+            }
+            if (year != null && !year.equals("none")) {
+                qb.append(" AND year = '").append(year).append("'");
+            }
+            String query = qb.toString();
             ResultSet results = statement.executeQuery(query);
             while (results.next()) {
                 String code = results.getString("lgaCode");
                 String name = results.getString("lgaName");
-                LGA lga = new LGA(code, name, Integer.parseInt(year));
+                int yr = 0;
+                try { yr = Integer.parseInt(year); } catch (NumberFormatException e) { yr = 0; }
+                LGA lga = new LGA(code, name, yr);
                 lgas.add(lga);
             }
             statement.close();
@@ -237,6 +245,7 @@ public class JDBCConnection {
     /**
      * Get all health conditions in the database.
      * @return ArrayList of HealthCondition objects
+     * @author @charlesphan0206
      */
     public ArrayList<Condition> getHealthConditions() {
         ArrayList<Condition> conditions = new ArrayList<>();
@@ -272,6 +281,7 @@ public class JDBCConnection {
     /**
      * Get all States in the database.
      * @return ArrayList of State objects
+     * @author @charlesphan0206
      */
     public ArrayList<State> getStates() {
         ArrayList<State> states = new ArrayList<>();
@@ -307,6 +317,7 @@ public class JDBCConnection {
     /**
      * Get all status from the indigStatus table.
      * @return ArrayList of IndigStatus objects
+     * @author @charlesphan0206
      */
     public ArrayList<IndigStatus> getIndigStatus() {
         ArrayList<IndigStatus> statusList = new ArrayList<>();
@@ -406,6 +417,38 @@ public class JDBCConnection {
                 if (connection != null) {
                     connection.close();
                 }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Get the total population for a specific LGA and year.
+     * @param lgaCode the LGA code
+     * @param year the year
+     * @return total population (0 if not found)
+     * @author @charlesphan0206
+     */
+    public int getTotalPopulationForLGA(String lgaCode, int year) {
+        int total = 0;
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            String query = "SELECT SUM(populationValue) as lgaPopulation FROM Population WHERE lgaCode = '" + lgaCode + "' AND year = " + year;
+            ResultSet results = statement.executeQuery(query);
+            if (results.next()) {
+                total = results.getInt("lgaPopulation");
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
             } catch (SQLException e) {
                 System.err.println(e.getMessage());
             }

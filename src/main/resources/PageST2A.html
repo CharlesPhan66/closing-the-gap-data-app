@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Subtask 2.1</title>
+    <title>Age and Health Conditions by LGA and State in 2021</title>
     <link rel="stylesheet" type="text/css" href="common.css" />
 </head>
 <body>
@@ -10,7 +10,7 @@
         <a href='/'>Homepage</a>
         <a href='mission.html'>Our Mission</a>
         <a href='page2A.html'>Age and Health Conditions</a>
-        <a href='page2B.html'>School and Non-School completion</a>
+        <a href='page2B.html'>School and Non-School Completion</a>
         <a href='page3A.html'>Sub Task 3.A</a>
         <a href='page3B.html'>Sub Task 3.B</a>
     </div>
@@ -21,6 +21,7 @@
         <h2>Filters</2>
         
         <form id="submitStateForm" method="POST" action="/page2A.html">
+            <input type="hidden" name="doFilter" value="false" />
             <label for="targetState">State:</label>
             <select name="targetState" id="targetState">
                 <option value="none" th:selected="${selectedState == null or selectedState == 'none'}">-- Select State --</option>
@@ -35,6 +36,7 @@
 
         <div th:if = "${selectedState} != null">
         <form id="submitYearForm" method="POST" action="/page2A.html">
+            <input type="hidden" name="doFilter" value="false" />
             <label for="targetYear">Year:</label>
             <input type="hidden" name="targetState" th:value="${selectedState}" />
             <select name="targetYear" id="targetYear">
@@ -44,9 +46,11 @@
             </select>
         </form>
         </div>
+    <!-- Notice is moved into the Filter form so it appears above the filter annotation/controls when relevant -->
 
         <div th:if = "(selectedState != null) and (selectedYear != null)">
         <form method="POST" action="/page2A.html">
+            <input type="hidden" name="doFilter" value="true" />
             <div style="margin-bottom: 1em;">
                 <label><b>Mode:</b></label>
                 <input type="radio" id="detailMode" name="mode" value="detail" th:checked="${mode == null or mode == 'detail'}">
@@ -57,7 +61,7 @@
             <input type="hidden" name="targetState" th:value="${selectedState}" />
             <input type="hidden" name="targetYear" th:value="${selectedYear}" />
             <div>
-                <label for="targetLGA">LGA:</label>
+                <label for="targetLGA">LGA<sup>*</sup>:</label>
                 <select name="targetLGA" id="targetLGA">
                     <option value="none" th:selected="${selectedLGA == null or selectedLGA == 'none'}">-- Select LGA --</option>
                    <option  th:each = "lga: ${lgasInState}"
@@ -101,13 +105,24 @@
                     </th:block>
                 </select>
             </div>
+            <div class="annotation" style="margin-bottom:0.5em;">
+                <span><sup>*</sup> LGA: Local Government Area</span>
+            </div>
+            <!-- Filters-changed notice placed below the LGA annotation so it does not interrupt the filter list -->
+            <div id="filtersChangedNotice" th:classappend="${showFiltersChanged} ? '' : ' hidden'" class="annotation notice" style="margin-top:0.5em;">
+                <p style="margin:0;"><strong>Filters changed — click Filter to apply</strong></p>
+            </div>
             <div>
-                <button type="submit">Filter</button>
+                <button id="filterBtn" type="submit" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">Filter</button>
             </div>
         </form>
         </div>
             <div>
                 <h2>Health Data</h2>
+                <div th:if="${mode == 'summary'}">
+                    <p>Level: <b th:text="${selectedLGA != null and selectedLGA != 'none' ? 'LGA' : 'State'}"></b>
+                    &nbsp;|&nbsp; Total population: <b th:text="${totalPopulation}"></b></p>
+                </div>
                 <div th:if="${healthList == null or healthList.isEmpty()}">
                     <p>Please select all filters and click Filter to view health data.</p>
                 </div>
@@ -121,10 +136,11 @@
                                 <th th:if="${healthList[0].status != null}">Status</th>
                                 <th th:if="${healthList[0].disease != null}">Disease</th>
                                 <th>Population Value</th>
+                                   <th th:if="${mode == 'summary' or mode == 'detail'}">Percent (%)<sup>*</sup></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <th:block th:each="h : ${healthList}">
+                            <th:block th:each="h, iterStat : ${healthList}">
                                 <tr>
                                     <td th:if="${h.stateName != null}" th:text="${h.stateName}"></td>
                                     <td th:if="${h.lgaName != null}" th:text="${h.lgaName}"></td>
@@ -132,10 +148,15 @@
                                     <td th:if="${h.status != null}" th:text="${h.status}"></td>
                                     <td th:if="${h.disease != null}" th:text="${h.disease}"></td>
                                     <td th:text="${h.populationValue}"></td>
+                                    <td th:if="${mode == 'summary' or mode == 'detail'}" th:text="${h.formattedPercentage}"></td>
                                 </tr>
                             </th:block>
                         </tbody>
                     </table>
+                        <div th:if="${mode == 'summary' or mode == 'detail'}" class="annotation" style="margin-top:0.5em;">
+                            <p style="margin:0;"><sup>*</sup> Percentage shown is calculated as (population value matching your selected filters) ÷ (total population of the selected LGA, if an LGA is selected; otherwise the total population of the selected State) × 100.</p>
+                        </div>
+                        </div>
                 </div>
             </div>
     </div>
@@ -148,10 +169,40 @@
                 this.form.submit();
             });
         }
+        // Auto-submit year changes to refresh LGA list, but mark the submission as doFilter=false so the table is not shown yet.
         var yearSelect = document.getElementById('targetYear');
         if(yearSelect) {
             yearSelect.addEventListener('change', function() {
-                this.form.submit();
+                // find the enclosing form and set doFilter=false then submit
+                var form = this.form;
+                var df = form.querySelector('input[name="doFilter"]');
+                if (df) df.value = 'false';
+                form.submit();
+            });
+        }
+
+        // Show the "filters changed" notice whenever any filter input in the main Filter form changes
+        var filterForm = document.querySelector('form[action="/page2A.html"][method="POST"]');
+        if (filterForm) {
+            // inputs we want to listen to (exclude hidden doFilter from auto-submit forms)
+            var selectors = ['#detailMode', '#summaryMode', '#targetLGA', '#targetStatus', '#targetGender', '#targetCondition'];
+            selectors.forEach(function(sel) {
+                var el = document.querySelector(sel);
+                if (el) {
+                    el.addEventListener('change', function() {
+                        var notice = document.getElementById('filtersChangedNotice');
+                        if (notice) notice.classList.remove('hidden');
+                        // also ensure the hidden doFilter input will be true when submitting via Filter
+                        var dfMain = filterForm.querySelector('input[name="doFilter"]');
+                        if (dfMain) dfMain.value = 'true';
+                    });
+                }
+            });
+
+            // Hide the notice when the Filter form is actually submitted
+            filterForm.addEventListener('submit', function() {
+                var notice = document.getElementById('filtersChangedNotice');
+                if (notice) notice.classList.add('hidden');
             });
         }
     });
