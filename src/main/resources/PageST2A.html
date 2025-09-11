@@ -127,9 +127,35 @@
                     <p>Please select all filters and click Filter to view health data.</p>
                 </div>
                 <div th:if="${healthList != null and !healthList.isEmpty()}">
+                    <!-- Sort controls: posts back with same filters plus sortBy/sortDir -->
+                    <form id="sortForm" method="POST" action="/page2A.html" style="margin-bottom:0.5em;">
+                        <input type="hidden" name="doFilter" value="true" />
+                        <input type="hidden" name="targetState" th:value="${selectedState}" />
+                        <input type="hidden" name="targetYear" th:value="${selectedYear}" />
+                        <input type="hidden" name="targetLGA" th:value="${selectedLGA}" />
+                        <input type="hidden" name="mode" th:value="${mode}" />
+                        <input type="hidden" name="targetStatus" th:value="${selectedStatus}" />
+                        <input type="hidden" name="targetGender" th:value="${selectedGender}" />
+                        <input type="hidden" name="targetCondition" th:value="${selectedCondition}" />
+                        <label for="sortBy">Sort by (optional):</label>
+                        <select id="sortBy" name="sortBy">
+                            <option value="none" th:selected="${sortBy == null}">-- No sort --</option>
+                            <option value="population" th:selected="${sortBy == 'population'}">Population</option>
+                            <option value="percent" th:selected="${sortBy == 'percent'}">Percent</option>
+                        </select>
+                        <label for="topN" id="topLabel" th:classappend="${sortBy == null} ? ' hidden' : ''">Top (optional):</label>
+                        <input type="number" id="topN" name="topN" min="1" th:value="${topN}" placeholder="e.g., 3" style="width:6em;" th:classappend="${sortBy == null} ? ' hidden' : ''" />
+                        <label for="sortDir">Direction:</label>
+                        <select id="sortDir" name="sortDir">
+                            <option value="desc" th:selected="${sortDir == null or sortDir == 'desc'}">Desc</option>
+                            <option value="asc" th:selected="${sortDir == 'asc'}">Asc</option>
+                        </select>
+                        <button type="submit">Sort</button>
+                    </form>
                     <table border="1" cellpadding="6" cellspacing="0">
                         <thead>
                             <tr>
+                                <th th:if="${ranks != null and !ranks.isEmpty()}">Rank</th>
                                 <th th:if="${healthList[0].stateName != null}">State Name</th>
                                 <th th:if="${healthList[0].lgaName != null}">LGA Name</th>
                                 <th th:if="${healthList[0].sex != null}">Sex</th>
@@ -142,6 +168,7 @@
                         <tbody>
                             <th:block th:each="h, iterStat : ${healthList}">
                                 <tr>
+                                    <td th:if="${ranks != null and ranks.size() > iterStat.index}" th:text="${ranks[iterStat.index]}"></td>
                                     <td th:if="${h.stateName != null}" th:text="${h.stateName}"></td>
                                     <td th:if="${h.lgaName != null}" th:text="${h.lgaName}"></td>
                                     <td th:if="${h.sex != null}" th:text="${h.sex}"></td>
@@ -153,6 +180,9 @@
                             </th:block>
                         </tbody>
                     </table>
+                    <div th:if="${topWarning != null}" class="annotation" style="margin-top:0.5em;color:#b35;">
+                        <p th:text="${topWarning}" style="margin:0;"></p>
+                    </div>
                         <div th:if="${mode == 'summary' or mode == 'detail'}" class="annotation" style="margin-top:0.5em;">
                             <p style="margin:0;"><sup>*</sup> Percentage shown is calculated as (population value matching your selected filters) ÷ (total population of the selected LGA, if an LGA is selected; otherwise the total population of the selected State) × 100.</p>
                         </div>
@@ -204,6 +234,22 @@
                 var notice = document.getElementById('filtersChangedNotice');
                 if (notice) notice.classList.add('hidden');
             });
+        }
+
+        // Toggle Top input visibility depending on Sort selection
+        var sortBySelect = document.getElementById('sortBy');
+        var topLabel = document.getElementById('topLabel');
+        var topInput = document.getElementById('topN');
+        function updateTopVisibility() {
+            if (!sortBySelect) return;
+            var none = (sortBySelect.value === 'none');
+            if (topLabel) topLabel.classList.toggle('hidden', none);
+            if (topInput) topInput.classList.toggle('hidden', none);
+        }
+        if (sortBySelect) {
+            sortBySelect.addEventListener('change', updateTopVisibility);
+            // initialize
+            updateTopVisibility();
         }
     });
     </script>

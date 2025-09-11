@@ -32,7 +32,7 @@ public class JDBCConnection {
      * Example: if statusID is null, then get total populationValue for all statusID.
      * @author @charlesphan0206
      */
-    public ArrayList<Health> getHealthSummaryByFilters(String year, String stateID, String lgaCode, String sexID, String statusID, String conditionID) {
+    public ArrayList<Health> getHealthSummaryByFilters(String year, String stateID, String lgaCode, String sexID, String statusID, String conditionID, String orderByClause, Integer limit) {
         ArrayList<Health> healthSummaryList = new ArrayList<>();
         Connection connection = null;
         try {
@@ -95,6 +95,12 @@ public class JDBCConnection {
                 query.append("AND h.conditionID='").append(conditionID).append("' ");
             }
             query.append("GROUP BY ").append(String.join(", ", groupByFields));
+            if (orderByClause != null && !orderByClause.trim().isEmpty()) {
+                query.append(" ORDER BY ").append(orderByClause);
+            }
+            if (limit != null && limit > 0) {
+                query.append(" LIMIT ").append(limit);
+            }
             ResultSet results = statement.executeQuery(query.toString());
             while (results.next()) {
                 String stateName = hasColumn(results, "stateName") ? results.getString("stateName") : null;
@@ -134,7 +140,7 @@ public class JDBCConnection {
      * Any filter can be null to ignore that filter.
      * @author @charlesphan0206
      */
-    public ArrayList<Health> getHealthByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID) {
+    public ArrayList<Health> getHealthByFilters(String year, String lgaCode, String sexID, String statusID, String conditionID, String orderByClause, Integer limit) {
         ArrayList<Health> healthList = new ArrayList<>();
         Connection connection = null;
         try {
@@ -174,6 +180,12 @@ public class JDBCConnection {
             }
             if (conditionID != null && !conditionID.equals("none")) {
                 query.append(" AND h.conditionID='").append(conditionID).append("'");
+            }
+            if (orderByClause != null && !orderByClause.trim().isEmpty()) {
+                query.append(" ORDER BY ").append(orderByClause);
+            }
+            if (limit != null && limit > 0) {
+                query.append(" LIMIT ").append(limit);
             }
             ResultSet results = statement.executeQuery(query.toString());
             while (results.next()) {
