@@ -2,7 +2,6 @@ package app;
 
 import java.util.ArrayList;
 import java.lang.StringBuilder;
-import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -22,6 +21,15 @@ public class JDBCConnection {
      * if any filter is null, instead of listing all records for that filter, using aggregate the populationValue.
      * Example: if statusID is null, then get total populationValue for all statusID.
      */
+    // Name of database file (contained in database folder)
+    public static final String DATABASE = "jdbc:sqlite:database/CTG.db";
+    
+    /**
+     * This creates a JDBC Object so we can keep talking to the database
+     */
+    public JDBCConnection() {
+        System.out.println("Created JDBC Connection Object");
+    }
     public ArrayList<Health> getHealthSummaryByFilters(String year, String stateID, String lgaCode, String sexID, String statusID, String conditionID) {
         ArrayList<Health> healthSummaryList = new ArrayList<>();
         Connection connection = null;
@@ -330,15 +338,6 @@ public class JDBCConnection {
         return statusList;
     }
 
-    // Name of database file (contained in database folder)
-    public static final String DATABASE = "jdbc:sqlite:database/CTG.db";
-
-    /**
-     * This creates a JDBC Object so we can keep talking to the database
-     */
-    public JDBCConnection() {
-        System.out.println("Created JDBC Connection Object");
-    }
 
     /**
      * Get all of the LGAs in the database for a given year.

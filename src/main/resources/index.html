@@ -170,8 +170,8 @@
                 <form method='get' th:action="@{/}">
                     <label for='stateId'>State:</label>
                     <select name='stateId' id='stateId' onchange='this.form.lgaCode.selectedIndex=0;this.form.submit()'>
-                        <option th:each="state : ${states}" th:value="${state.stateID}" th:text="${state.name}"
-                                th:selected="${state.stateID == selectedStateId}"></option>
+                        <option th:each="state : ${states}" th:value="${state.code}" th:text="${state.name}"
+                                th:selected="${state.code == selectedStateId.toString()}"></option>
                     </select>
                     
                     <label for='lgaCode'>Local Areas:</label>

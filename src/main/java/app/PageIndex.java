@@ -64,12 +64,17 @@ public class PageIndex implements Handler {
             selectedLGA = null; // Also nullify the object
         }
 
-        // Find the selected State object
+        // Find the selected State object (State.code is a String ID)
         State selectedState = null;
         for (State state : states) {
-            if (state.getStateID() == selectedStateId) {
-                selectedState = state;
-                break;
+            try {
+                int stateCode = Integer.parseInt(state.getCode());
+                if (stateCode == selectedStateId) {
+                    selectedState = state;
+                    break;
+                }
+            } catch (NumberFormatException e) {
+                // ignore non-numeric state codes
             }
         }
         
