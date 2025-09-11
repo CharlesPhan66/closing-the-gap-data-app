@@ -127,7 +127,8 @@
                     <p>Please select all filters and click Filter to view health data.</p>
                 </div>
                 <div th:if="${healthList != null and !healthList.isEmpty()}">
-                    <!-- Sort controls: posts back with same filters plus sortBy/sortDir -->
+                    <!-- Sort controls: only available in detail mode -->
+                    <div th:if="${mode == 'detail'}">
                     <form id="sortForm" method="POST" action="/page2A.html" style="margin-bottom:0.5em;">
                         <input type="hidden" name="doFilter" value="true" />
                         <input type="hidden" name="targetState" th:value="${selectedState}" />
@@ -152,10 +153,11 @@
                         </select>
                         <button type="submit">Sort</button>
                     </form>
+                    </div>
                     <table border="1" cellpadding="6" cellspacing="0">
                         <thead>
                             <tr>
-                                <th th:if="${ranks != null and !ranks.isEmpty()}">Rank</th>
+                                <th th:if="${topN != null}">Rank</th>
                                 <th th:if="${healthList[0].stateName != null}">State Name</th>
                                 <th th:if="${healthList[0].lgaName != null}">LGA Name</th>
                                 <th th:if="${healthList[0].sex != null}">Sex</th>
@@ -168,7 +170,7 @@
                         <tbody>
                             <th:block th:each="h, iterStat : ${healthList}">
                                 <tr>
-                                    <td th:if="${ranks != null and ranks.size() > iterStat.index}" th:text="${ranks[iterStat.index]}"></td>
+                                    <td th:if="${topN != null}" th:text="${h.rank}"></td>
                                     <td th:if="${h.stateName != null}" th:text="${h.stateName}"></td>
                                     <td th:if="${h.lgaName != null}" th:text="${h.lgaName}"></td>
                                     <td th:if="${h.sex != null}" th:text="${h.sex}"></td>

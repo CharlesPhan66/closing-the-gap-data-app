@@ -86,7 +86,8 @@ public class PageST2A implements Handler {
         // Read sorting parameters: only apply ORDER BY if user explicitly submitted sortBy (sort is optional)
         String sortByParam = context.formParam("sortBy"); // "population", "percent", or "none"/null
         String sortDirParam = context.formParam("sortDir"); // "asc" or "desc" or null
-        boolean sortRequested = (sortByParam != null && sortByParam.length() > 0 && !sortByParam.equals("none"));
+    // Only allow sorting when in detail mode (summary is aggregated and usually returns single row)
+    boolean sortRequested = (sortByParam != null && sortByParam.length() > 0 && !sortByParam.equals("none") && mode.equals("detail"));
         String sortBy = null;
         String sortDir = null;
         if (sortRequested) {
@@ -189,20 +190,7 @@ public class PageST2A implements Handler {
             }
         }
         model.put("healthList", healthList);
-        // Compute ranks for display only when topN was requested
-        ArrayList<String> ranks = null;
-        if (topN != null && healthList != null && !healthList.isEmpty()) {
-            ranks = new ArrayList<>();
-            for (int i = 0; i < healthList.size(); i++) {
-                int rank = i + 1;
-                String suffix = "th";
-                if (rank % 10 == 1 && rank % 100 != 11) suffix = "st";
-                else if (rank % 10 == 2 && rank % 100 != 12) suffix = "nd";
-                else if (rank % 10 == 3 && rank % 100 != 13) suffix = "rd";
-                ranks.add(rank + suffix);
-            }
-        }
-        model.put("ranks", ranks);
+    // Ranks are provided by the database when ordering is requested; templates should use h.rank
     model.put("topWarning", topWarning);
     model.put("topN", topN);
         model.put("mode", mode);

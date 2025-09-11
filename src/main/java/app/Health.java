@@ -8,6 +8,7 @@ public class Health {
     private String disease;
     private int populationValue;
     private double percentage;
+    private int rank = 0;
 
     public Health() {}
 
@@ -32,6 +33,14 @@ public class Health {
 
     public void setPercentage(double percentage) {
         this.percentage = percentage;
+    }
+
+    public int getRank() {
+        return rank;
+    }
+
+    public void setRank(int rank) {
+        this.rank = rank;
     }
 
     public String getFormattedPercentage() {
