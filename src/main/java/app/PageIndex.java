@@ -1,161 +1,94 @@
 package app;
 
-import java.util.ArrayList;
-
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Example Index HTML class using Javalin
- * <p>
- * Generate a static HTML page using Javalin
- * by writing the raw HTML into a Java String object
- *
- * @author Timothy Wiley, 2023. email: timothy.wiley@rmit.edu.au
- * @author Santha Sumanasekara, 2021. email: santha.sumanasekara@rmit.edu.au
+ * Handles HTTP requests for the index page and prepares data for the Thymeleaf template.
  */
 public class PageIndex implements Handler {
 
-    // URL of this page relative to http://localhost:7001/
     public static final String URL = "/";
 
     @Override
     public void handle(Context context) throws Exception {
-        // Create a simple HTML webpage in a String
-        String html = "<html>";
+        // Get parameters from the URL
+        String yearParam = context.queryParam("year");
+        String lgaCodeParam = context.queryParam("lgaCode");
+        String stateIdParam = context.queryParam("stateId");
+        
+        int year = (yearParam != null && yearParam.equals("2021")) ? 2021 : 2016;
 
-        // Add some Header information
-        html = html + "<head>" + 
-               "<title>Homepage</title>";
+        // Establish database connection and retrieve data
+        JDBCConnection jdbc = new JDBCConnection();
+        ArrayList<LGA> allLGAs = jdbc.getLGAsByYear(year);
+        ArrayList<State> states = jdbc.getStates();
+        ArrayList<Outcome> outcomes = jdbc.getOutcomes();
 
-        // Add some CSS (external file)
-        html = html + "<link rel='stylesheet' type='text/css' href='common.css' />";
-        html = html + "</head>";
-
-        // Add the body
-        html = html + "<body>";
-
-        // Add the topnav
-        // This uses a Java v15+ Text Block
-        html = html + """
-            <div class='topnav'>
-                <a href='/'>Homepage</a>
-                <a href='mission.html'>Our Mission</a>
-                <a href='page2A.html'>Sub Task 2.A</a>
-                <a href='page2B.html'>Sub Task 2.B</a>
-                <a href='page3A.html'>Sub Task 3.A</a>
-                <a href='page3B.html'>Sub Task 3.B</a>
-            </div>
-        """;
-
-        // Add header content block
-        html = html + """
-            <div class='header'>
-                <h1>
-                    <img src='logo.png' class='top-image' alt='RMIT logo' height='75'>
-                    Homepage
-                </h1>
-            </div>
-        """;
-
-        // Add Div for page Content
-        html = html + "<div class='content'>";
-
-        // Add HTML for the page content
-        html = html + """
-            <p>Homepage content</p>
-            """;
-
-        // Get the ArrayList of Strings of all LGAs
-        ArrayList<String> lgaNames = getLGAs2016();
-
-        // Add HTML for the LGA list
-        html = html + "<h1>All 2016 LGAs in the Voice to Parliament database</h1>" + "<ul>";
-
-        // Finally we can print out all of the LGAs
-        for (String name : lgaNames) {
-            html = html + "<li>" + name + "</li>";
-        }
-
-        // Finish the List HTML
-        html = html + "</ul>";
-
-        // Close Content div
-        html = html + "</div>";
-
-        // Footer
-        html = html + """
-            <div class='footer'>
-                <p>COSC3056 - Studio Project Starter Code (Sep23)</p>
-            </div>
-        """;
-
-        // Finish the HTML webpage
-        html = html + "</body>" + "</html>";
-
-
-        // DO NOT MODIFY THIS
-        // Makes Javalin render the webpage
-        context.html(html);
-    }
-
-
-    /**
-     * Get the names of the LGAs in the database.
-     */
-    public ArrayList<String> getLGAs2016() {
-        // Create the ArrayList of LGA objects to return
-        ArrayList<String> lgas = new ArrayList<String>();
-
-        // Setup the variable for the JDBC connection
-        Connection connection = null;
-
-        try {
-            // Connect to JDBC data base
-            connection = DriverManager.getConnection(JDBCConnection.DATABASE);
-
-            // Prepare a new SQL Query & Set a timeout
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);
-
-            // The Query
-            String query = "SELECT * FROM LGA WHERE year='2016'";
-            
-            // Get Result
-            ResultSet results = statement.executeQuery(query);
-
-            // Process all of the results
-            while (results.next()) {
-                String name16  = results.getString("lgaName");
-
-                // Add the lga object to the array
-                lgas.add(name16);
-            }
-
-            // Close the statement because we are done with it
-            statement.close();
-        } catch (SQLException e) {
-            // If there is an error, lets just pring the error
-            System.err.println(e.getMessage());
-        } finally {
-            // Safety code to cleanup
+        // Determine the selected state
+        int selectedStateId = 1; // Default to the first state
+        if (stateIdParam != null) {
             try {
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                // connection close failed.
-                System.err.println(e.getMessage());
+                selectedStateId = Integer.parseInt(stateIdParam);
+            } catch (NumberFormatException e) {
+                // Keep the default if the parameter is invalid
             }
         }
 
-        // Finally we return all of the lga
-        return lgas;
+        // Filter LGAs based on the selected state
+        ArrayList<LGA> filteredLGAs = new ArrayList<>();
+        for (LGA lga : allLGAs) {
+            if (lga.getStateID() == selectedStateId) {
+                filteredLGAs.add(lga);
+            }
+        }
+
+        // Find the selected LGA object and validate it
+        LGA selectedLGA = null;
+        boolean isLgaInState = false;
+        if (lgaCodeParam != null) {
+            for (LGA lga : filteredLGAs) {
+                if (lga.getCode().equals(lgaCodeParam)) {
+                    selectedLGA = lga;
+                    isLgaInState = true;
+                    break;
+                }
+            }
+        }
+        // If the selected LGA is not in the current state, reset it
+        if (!isLgaInState) {
+            lgaCodeParam = null;
+            selectedLGA = null; // Also nullify the object
+        }
+
+        // Find the selected State object
+        State selectedState = null;
+        for (State state : states) {
+            if (state.getStateID() == selectedStateId) {
+                selectedState = state;
+                break;
+            }
+        }
+        
+        // Get the total population for the selected state
+        int statePopulation = jdbc.getTotalPopulationForState(selectedStateId, year);
+        
+        // Prepare the data model to be passed to the template
+        Map<String, Object> model = new HashMap<>();
+        model.put("year", year);
+        model.put("states", states);
+        model.put("selectedStateId", selectedStateId);
+        model.put("selectedState", selectedState);
+        model.put("filteredLGAs", filteredLGAs);
+        model.put("lgaCodeParam", lgaCodeParam);
+        model.put("selectedLGA", selectedLGA);
+        model.put("statePopulation", statePopulation);
+        model.put("outcomes", outcomes);
+        
+        // Render the template with the model data
+        context.render("index.html", model);
     }
 }

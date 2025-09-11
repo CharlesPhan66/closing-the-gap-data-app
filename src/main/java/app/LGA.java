@@ -7,18 +7,6 @@ package app;
  * @author Timothy Wiley, 2023. email: timothy.wiley@rmit.edu.au
  */
 public class LGA {
-   // No-argument constructor for frameworks and template engines
-   public LGA() {}
-
-   /**
-    * Create an LGA and set the fields
-    */
-   public LGA(String code, String name, int year) {
-      this.code = code;
-      this.name = name;
-      this.year = year;
-   }
-
    // LGA Code
    private String code;
 
@@ -28,6 +16,30 @@ public class LGA {
    // LGA Year
    private int year;
 
+   // LGA Total Population
+   private int population;
+
+   // LGA State ID
+   private int stateID;
+   // No-argument constructor for frameworks and template engines
+   public LGA() {}
+
+   public LGA(String code, String name, int year, int population, int stateID){
+      this.code = code;
+      this.name = name;
+      this.year = year;
+      this.population = population;
+      this.stateID = stateID;
+   }
+
+   public LGA(String code, String name, int year) {
+      this.code = code;
+      this.name = name;
+      this.year = year;
+   }
+   /**
+    * Create an LGA and set the fields
+    */
 
    public String getCode() {
       return code;
@@ -51,5 +63,20 @@ public class LGA {
 
    public void setYear(int year) {
       this.year = year;
+   }
+
+   public void setPopulation(int population) {
+      this.population = population;
+   }
+
+   public int getPopulation() {
+      return population;
+   }
+
+   public void setStateID(int stateID) {
+      this.stateID = stateID;
+   }
+   public int getStateID() {
+      return stateID;
    }
 }
