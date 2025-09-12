@@ -20,7 +20,70 @@
     </div>
 
     <div class='content'>
-        <p>Subtask 3.A page content</p>
+        <h2>Gap Analysis: 2016 vs 2021</h2>
+        <form method="POST" action="/page3A.html" style="margin-bottom:2em;">
+            <label for="dataset">Dataset:</label>
+            <select name="dataset" id="dataset" th:field="*{dataset}">
+                <option value="Population" th:selected="${dataset == 'Population'}">Population</option>
+                <option value="Health" th:selected="${dataset == 'Health'}">Health</option>
+                <option value="Education" th:selected="${dataset == 'Education'}">School Education</option>
+                <option value="NonSchoolEdu" th:selected="${dataset == 'NonSchoolEdu'}">Non-school Education</option>
+            </select>
+            <br/>
+            <label for="status1">Status 1:</label>
+            <select name="status1" id="status1">
+                <option th:each="s : ${statusList}" th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${status1 == s.statusID}"></option>
+            </select>
+            <label for="status2">Status 2:</label>
+            <select name="status2" id="status2">
+                <option th:each="s : ${statusList}" th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${status2 == s.statusID}"></option>
+            </select>
+            <br/>
+            <label for="sex1">Sex 1:</label>
+            <select name="sex1" id="sex1">
+                <option value="both" th:selected="${sex1 == 'both'}">Both</option>
+                <option th:each="g : ${sexList}" th:value="${g.sexID}" th:text="${g.sex}" th:selected="${sex1 == g.sexID}"></option>
+            </select>
+            <label for="sex2">Sex 2:</label>
+            <select name="sex2" id="sex2">
+                <option value="both" th:selected="${sex2 == 'both'}">Both</option>
+                <option th:each="g : ${sexList}" th:value="${g.sexID}" th:text="${g.sex}" th:selected="${sex2 == g.sexID}"></option>
+            </select>
+            <br/>
+            <!-- Population: Age group filter -->
+            <div th:if="${dataset == 'Population'}">
+                <label for="ageGroup">Age Group:</label>
+                <select name="ageGroup" id="ageGroup">
+                    <option th:each="a : ${ageGroupList}" th:value="${a.ageID}" th:text="${a.ageStart} + '-' + ${a.ageEnd}"></option>
+                </select>
+            </div>
+            <!-- Health: Multi-select health conditions -->
+            <div th:if="${dataset == 'Health'}">
+                <label>Health Conditions:</label>
+                <div th:each="h : ${healthList}">
+                    <input type="checkbox" name="healthIDs" th:value="${h.conditionID}" />
+                    <span th:text="${h.diseaseName}"></span>
+                </div>
+                <div style="color:red;">No data for 2016 is provided. 2016 values will show N/A.</div>
+            </div>
+            <!-- Education: Dropdown -->
+            <div th:if="${dataset == 'Education'}">
+                <label for="eduLevel">Education Level:</label>
+                <select name="eduLevel" id="eduLevel">
+                    <option th:each="e : ${eduList}" th:value="${e.levelID}" th:text="${e.level}"></option>
+                </select>
+            </div>
+            <!-- Non-School: Multi-select -->
+            <div th:if="${dataset == 'NonSchoolEdu'}">
+                <label>Non-School Qualifications:</label>
+                <div th:each="n : ${nonSchoolList}">
+                    <input type="checkbox" name="nonSchoolIDs" th:value="${n.d_cID}" />
+                    <span th:text="${n.name}"></span>
+                </div>
+            </div>
+            <br/>
+            <button type="submit">Apply</button>
+        </form>
     </div>
 
     <div class='footer'>
