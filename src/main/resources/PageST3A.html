@@ -24,44 +24,70 @@
         <form method="POST" action="/page3A.html" style="margin-bottom:2em;">
             <label for="dataset">Dataset:</label>
             <select name="dataset" id="dataset" th:field="*{dataset}">
+                <option value="" th:selected="${dataset == null}">--Select dataset--</option>
                 <option value="Population" th:selected="${dataset == 'Population'}">Population</option>
                 <option value="Health" th:selected="${dataset == 'Health'}">Health</option>
                 <option value="Education" th:selected="${dataset == 'Education'}">School Education</option>
                 <option value="NonSchoolEdu" th:selected="${dataset == 'NonSchoolEdu'}">Non-school Education</option>
             </select>
+            <!-- Autosubmit for choosing dataset -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var datasetSelect = document.getElementById('dataset');
+                    if (datasetSelect) {
+                        datasetSelect.addEventListener('change', function() {
+                            this.form.submit();
+                        });
+                    }
+                });
+            </script>
+            </select>
             <br/>
             <label for="status1">Status 1:</label>
             <select name="status1" id="status1">
+                <option value="" th:selected="${status1 == null}">--Select status--</option>
                 <option th:each="s : ${statusList}" th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${status1 == s.statusID}"></option>
             </select>
             <label for="status2">Status 2:</label>
             <select name="status2" id="status2">
+                <option value="" th:selected="${status2 == null}">--Select status--</option>
                 <option th:each="s : ${statusList}" th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${status2 == s.statusID}"></option>
             </select>
             <br/>
             <label for="sex1">Sex 1:</label>
             <select name="sex1" id="sex1">
+                <option value="" th:selected="${sex1 == null}">--Select gender--</option>
                 <option value="both" th:selected="${sex1 == 'both'}">Both</option>
                 <option th:each="g : ${sexList}" th:value="${g.sexID}" th:text="${g.sex}" th:selected="${sex1 == g.sexID}"></option>
             </select>
             <label for="sex2">Sex 2:</label>
             <select name="sex2" id="sex2">
+                <option value="" th:selected="${sex2 == null}">--Select gender--</option>
                 <option value="both" th:selected="${sex2 == 'both'}">Both</option>
                 <option th:each="g : ${sexList}" th:value="${g.sexID}" th:text="${g.sex}" th:selected="${sex2 == g.sexID}"></option>
             </select>
             <br/>
             <!-- Population: Age group filter -->
             <div th:if="${dataset == 'Population'}">
-                <label for="ageGroup">Age Group:</label>
-                <select name="ageGroup" id="ageGroup">
-                    <option th:each="a : ${ageGroupList}" th:value="${a.ageID}" th:text="${a.ageStart} + '-' + ${a.ageEnd}"></option>
+                <label for="ageStart">Age Start:</label>
+                <select name="ageStart" id="ageStart" onchange="this.form.submit()">
+                    <option value="" th:selected="${selectedAgeStart == null}">--Select start--</option>
+                    <option th:each="start : ${ageStartList}" th:value="${start}" th:text="${start}" th:selected="${selectedAgeStart == start}"></option>
                 </select>
+                <span th:if="${selectedAgeStart != null && selectedAgeStart == 65}"> (65 and over)</span>
+                <span th:if="${selectedAgeStart != null && selectedAgeStart < 65}">
+                    <label for="ageEnd">Age End:</label>
+                    <select name="ageEnd" id="ageEnd" onchange="this.form.submit()">
+                        <option value="" th:selected="${selectedAgeEnd == null}">--Select end--</option>
+                        <option th:each="end : ${ageEndList}" th:value="${end}" th:text="${end}" th:selected="${selectedAgeEnd == end}"></option>
+                    </select>
+                </span>
             </div>
             <!-- Health: Multi-select health conditions -->
             <div th:if="${dataset == 'Health'}">
                 <label>Health Conditions:</label>
                 <div th:each="h : ${healthList}">
-                    <input type="checkbox" name="healthIDs" th:value="${h.conditionID}" />
+                    <input type="checkbox" name="healthIDs" th:value="${h.conditionID}" th:checked="${selectedHealthIDs != null and #lists.contains(selectedHealthIDs, h.conditionID)}" />
                     <span th:text="${h.diseaseName}"></span>
                 </div>
                 <div style="color:red;">No data for 2016 is provided. 2016 values will show N/A.</div>
@@ -70,14 +96,15 @@
             <div th:if="${dataset == 'Education'}">
                 <label for="eduLevel">Education Level:</label>
                 <select name="eduLevel" id="eduLevel">
-                    <option th:each="e : ${eduList}" th:value="${e.levelID}" th:text="${e.level}"></option>
+                    <option value="" th:selected="${eduLevel == null}">--Select Level--</option>
+                    <option th:each="e : ${eduList}" th:value="${e.levelID}" th:text="${e.level}" th:selected="${edu == e.levelID}"></option>
                 </select>
             </div>
             <!-- Non-School: Multi-select -->
             <div th:if="${dataset == 'NonSchoolEdu'}">
                 <label>Non-School Qualifications:</label>
                 <div th:each="n : ${nonSchoolList}">
-                    <input type="checkbox" name="nonSchoolIDs" th:value="${n.d_cID}" />
+                    <input type="checkbox" name="nonSchoolIDs" th:value="${n.DCID}" th:checked="${selectedNonSchoolIDs != null and #lists.contains(selectedNonSchoolIDs, n.DCID)}" />
                     <span th:text="${n.name}"></span>
                 </div>
             </div>
