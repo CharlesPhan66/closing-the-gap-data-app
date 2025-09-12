@@ -798,7 +798,7 @@ public class JDBCConnection {
             ResultSet results = statement.executeQuery(query);
 
             while (results.next()) {
-                int ageID = results.getInt("ageID");
+                String ageID = results.getString("ageID");
                 int ageStart = results.getInt("ageStart");
                 int ageEnd = results.getInt("ageEnd");
                 Age age = new Age(ageID, ageStart, ageEnd);

@@ -1,17 +1,17 @@
 package app;
 
 public class Age {
-    private int ageID;
+    private String ageID;
     private int ageStart;
     private int ageEnd;
 
-    public Age(int ageID, int ageStart, int ageEnd) {
+    public Age(String ageID, int ageStart, int ageEnd) {
         this.ageID = ageID;
         this.ageStart = ageStart;
         this.ageEnd = ageEnd;
     }
 
-    public int getAgeID() {
+    public String getAgeID() {
         return ageID;
     }
 
