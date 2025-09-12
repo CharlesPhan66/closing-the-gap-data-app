@@ -5,14 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
     <link rel='stylesheet' type='text/css' href='common.css' />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
+
     <style>
-        #map { height: 500px; }
         /* Các style CSS được giữ nguyên từ phiên bản trước */
         .topnav {
             overflow: hidden;
@@ -167,7 +161,6 @@
         <input type='search' class='search-input big' placeholder='Search LGAs, outcomes, detailed outcomes, projects...'>
     </div>
 
-    <div id="map"></div>
 
     <div class='content'>
         <section class='hero'>
@@ -235,11 +228,6 @@
         <p>COSC3056 - Studio Project Starter Code (Sep23)</p>
     </div>
 
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        var selectedStateId = /*[[${selectedStateId}]]*/ null;
-        /*]]>*/
-    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const carousel = document.getElementById('carousel');
@@ -272,54 +260,6 @@
             });
 
             update();
-        });
-
-        var map = L.map('map').setView([-25.2744, 133.7751], 4);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        fetch('/api/states-geo')
-            .then(response => response.json())
-            .then(data => {
-                var geojsonLayer = L.geoJSON(data, {
-                    style: function(feature) {
-                        return {
-                            fillOpacity: 0,
-                            opacity: 0
-                        };
-                    },
-                    onEachFeature: function(feature, layer) {
-                        layer.on({
-                            mouseover: function(e) {
-                                var layer = e.target;
-                                layer.setStyle({
-                                    weight: 5,
-                                    color: '#666',
-                                    dashArray: '',
-                                    fillOpacity: 0.7
-                                });
-                            },
-                            mouseout: function(e) {
-                                geojsonLayer.resetStyle(e.target);
-                            },
-                            click: function(e) {
-                                map.fitBounds(e.target.getBounds());
-                                console.log('Layer clicked:', feature.properties);
-                            }
-                        });
-                    }
-                }).addTo(map);
-
-                if (selectedStateId) {
-                    geojsonLayer.eachLayer(function(layer) {
-                        if (layer.feature.properties.STATE_CODE == selectedStateId) {
-                            layer.fire('click');
-                        }
-                    });
-                }
             });
     </script>
 </body>

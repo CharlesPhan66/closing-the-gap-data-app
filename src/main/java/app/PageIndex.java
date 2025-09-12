@@ -1,20 +1,20 @@
 package app;
 
 import io.javalin.http.Context;
+import io.javalin.http.Handler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Example Index HTML class using Javalin
- * <p>
- * Generate a static HTML page using normal Java strings
+ * Handles HTTP requests for the index page and prepares data for the Thymeleaf template.
  */
-public class PageIndex {
+public class PageIndex implements Handler {
 
     public static final String URL = "/";
 
-    public static Map<String, Object> getModel(Context context) {
+    @Override
+    public void handle(Context context) throws Exception {
         // Get parameters from the URL
         String yearParam = context.queryParam("year");
         String lgaCodeParam = context.queryParam("lgaCode");
@@ -64,17 +64,12 @@ public class PageIndex {
             selectedLGA = null; // Also nullify the object
         }
 
-        // Find the selected State object (State.code is a String ID)
+        // Find the selected State object
         State selectedState = null;
         for (State state : states) {
-            try {
-                int stateCode = Integer.parseInt(state.getCode());
-                if (stateCode == selectedStateId) {
-                    selectedState = state;
-                    break;
-                }
-            } catch (NumberFormatException e) {
-                // ignore non-numeric state codes
+            if (state.getCode().equals(String.valueOf(selectedStateId))) {
+                selectedState = state;
+                break;
             }
         }
         
@@ -93,6 +88,7 @@ public class PageIndex {
         model.put("statePopulation", statePopulation);
         model.put("outcomes", outcomes);
         
-        return model;
+        // Render the template with the model data
+        context.render("index.html", model);
     }
 }
