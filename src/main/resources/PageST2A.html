@@ -41,13 +41,11 @@
             <input type="hidden" name="targetState" th:value="${selectedState}" />
             <select name="targetYear" id="targetYear">
                 <option value="none" th:selected="${selectedYear == null or selectedYear == 'none'}">-- Select Year --</option>
-                <!-- <option value="2016" th:selected="${selectedYear == '2016'}">2016</option> -->
                 <option value="2021" th:selected="${selectedYear == '2021'}">2021</option>
             </select>
         </form>
         </div>
-    <!-- Notice is moved into the Filter form so it appears above the filter annotation/controls when relevant -->
-
+        
         <div th:if = "(selectedState != null) and (selectedYear != null)">
         <form method="POST" action="/page2A.html">
             <input type="hidden" name="doFilter" value="true" />
@@ -153,6 +151,9 @@
                         </select>
                         <button type="submit">Sort</button>
                     </form>
+                    </div>
+                    <div th:if="${mode != 'detail'}" class="annotation" style="margin-top:0.5em;color:#333;">
+                        <p style="margin:0;"><strong>Note:</strong> Sort-by and Top-N are only available in Detail mode.</p>
                     </div>
                     <table border="1" cellpadding="6" cellspacing="0">
                         <thead>

@@ -6,9 +6,11 @@ import java.util.Map;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-
+/**
+ * @author @charlesphan0206
+ * Please refer to contribution document for details of assigned tasks.
+ */
 public class PageST3A implements Handler {
-
     // URL of this page relative to http://localhost:7001/
     public static final String URL = "/page3A.html";
     public static final String TEMPLATE = ("PageST3A.html");

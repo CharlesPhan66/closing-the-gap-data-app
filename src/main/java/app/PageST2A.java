@@ -7,9 +7,11 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
 import java.util.Map;
-
+/**
+ * @author @charlesphan0206
+ * Please refer to contribution document for details of assigned tasks.
+ */
 public class PageST2A implements Handler {
-    
     // URL of this page relative to http://localhost:7001/
     public static final String URL = "/page2A.html";
     private static final String TEMPLATE = ("PageST2A.html");
@@ -17,11 +19,10 @@ public class PageST2A implements Handler {
     @Override
     public void handle(Context context) throws Exception {
         // Get user input from the form (if any)
-    String chosenYear = context.formParam("targetYear");
-    String chosenLGA = context.formParam("targetLGA");
-    String chosenStatus = context.formParam("targetStatus");
-    String chosenState = context.formParam("targetState");
-        // String chosenAge = context.formParam("targetAge");
+        String chosenYear = context.formParam("targetYear");
+        String chosenLGA = context.formParam("targetLGA");
+        String chosenStatus = context.formParam("targetStatus");
+        String chosenState = context.formParam("targetState");
         String chosenGender = context.formParam("targetGender");
         String chosenCondition = context.formParam("targetCondition");
         String mode = context.formParam("mode");
@@ -38,16 +39,12 @@ public class PageST2A implements Handler {
         System.out.println("Chosen Year: " + chosenYear);
         System.out.println("Chosen LGA: " + chosenLGA);
         System.out.println("Chosen Status: " + chosenStatus);
-        // System.out.println("Chosen Age: " + chosenAge);
         System.out.println("Chosen Gender: " + chosenGender);
         System.out.println("Chosen Condition: " + chosenCondition);
         System.out.println("Mode: " + mode);
         
         // Create the model to pass to Thymeleaf
         Map<String, Object> model = new HashMap<>();
-        
-        // Add in title for the h1 tag to the model
-        model.put("title", "Find Health Conditions By Demographics");
         
         JDBCConnection jdbc = new JDBCConnection();
 
@@ -70,22 +67,22 @@ public class PageST2A implements Handler {
 
          
     // Record the selections that the user made previously
-         model.put("selectedYear", chosenYear);
-         model.put("selectedLGA", chosenLGA);
-         model.put("selectedStatus", chosenStatus);
-         model.put("selectedState", chosenState);
+        model.put("selectedYear", chosenYear);
+        model.put("selectedLGA", chosenLGA);
+        model.put("selectedStatus", chosenStatus);
+        model.put("selectedState", chosenState);
         //  model.put("selectedAge", chosenAge);
-         model.put("selectedGender", chosenGender);
-         model.put("selectedCondition", chosenCondition);
+        model.put("selectedGender", chosenGender);
+        model.put("selectedCondition", chosenCondition);
 
     // expose the flags to the template
-    model.put("doFilter", doFilter == null ? "none" : doFilter);
-    model.put("showFiltersChanged", showFiltersChanged);
+        model.put("doFilter", doFilter == null ? "none" : doFilter);
+        model.put("showFiltersChanged", showFiltersChanged);
 
     ArrayList<Health> healthList = new ArrayList<>();
         // Read sorting parameters: only apply ORDER BY if user explicitly submitted sortBy (sort is optional)
         String sortByParam = context.formParam("sortBy"); // "population", "percent", or "none"/null
-        String sortDirParam = context.formParam("sortDir"); // "asc" or "desc" or null
+        String sortDirParam = context.formParam("sortDir"); // "asc" or "desc" or null (Direction)
     // Only allow sorting when in detail mode (summary is aggregated and usually returns single row)
     boolean sortRequested = (sortByParam != null && sortByParam.length() > 0 && !sortByParam.equals("none") && mode.equals("detail"));
         String sortBy = null;
