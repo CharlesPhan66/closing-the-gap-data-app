@@ -25,17 +25,261 @@ public class JDBCConnection {
     public JDBCConnection() {
         System.out.println("Created JDBC Connection Object");
     }
+// Inserted at the end of the JDBCConnection class
+    /**
+     * Get health gap results for a single health condition, parameterized for user-chosen filters.
+     * @param status1 statusID for group 1
+     * @param status2 statusID for group 2
+     * @param sex sexID ("both", "f", "m")
+     * @param conditionID health conditionID
+     * @return list of PopulationGapResult
+     */
+    public ArrayList<PopulationGapResult> getHealthGapSingleCondition(String status1, String status2, String sex, String conditionID) {
+        ArrayList<PopulationGapResult> results = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // Build sex filter for SQL
+            String sexJoin = "";
+            String sexWhere = "";
+            if (!"both".equalsIgnoreCase(sex)) {
+                sexJoin = " AND h1.sexID = h2.sexID ";
+                sexWhere = " AND h1.sexID = '" + sex + "' ";
+            }
+
+            String subquery =
+                "SELECT h1.lgaCode, LGA.lgaName, " +
+                "SUM(h1.populationValue) AS status1Value, " +
+                "SUM(h2.populationValue) AS status2Value, " +
+                "SUM(h2.populationValue) - SUM(h1.populationValue) AS gap " +
+                "FROM Health h1 " +
+                "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + " " +
+                "JOIN LGA ON h1.lgaCode = LGA.lgaCode " +
+                "WHERE h1.year = %YEAR% " +
+                "AND h1.statusID = '" + status1 + "' " +
+                "AND h2.statusID = '" + status2 + "' " +
+                sexWhere +
+                " AND h1.conditionID = '" + conditionID + "' " +
+                "GROUP BY h1.lgaCode";
+
+            String sub2016 = subquery.replace("%YEAR%", "2016");
+            String sub2021 = subquery.replace("%YEAR%", "2021");
+
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT y2021.lgaName AS lga, ");
+            query.append("y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
+            query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
+            query.append("FROM (").append(sub2016).append(") y2016 ");
+            query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
+            query.append("ON y2016.lgaCode = y2021.lgaCode");
+
+            ResultSet rs = statement.executeQuery(query.toString());
+            while (rs.next()) {
+                String lga = rs.getString("lga");
+                Integer status1_2016 = rs.getObject("status1_2016") != null ? rs.getInt("status1_2016") : null;
+                Integer status2_2016 = rs.getObject("status2_2016") != null ? rs.getInt("status2_2016") : null;
+                Integer gap_2016 = rs.getObject("gap_2016") != null ? rs.getInt("gap_2016") : null;
+                Integer status1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
+                Integer status2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
+                Integer gap_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
+                results.add(new PopulationGapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return results;
+    }
 
     /**
-    * Get population gap results for the Population dataset, flexible for user-chosen status, sex, and age group filters.
-    * @param status1 statusID for group 1 (e.g. indig)
-    * @param status2 statusID for group 2 (e.g. non_indig)
-    * @param sex sexID ("both", "f", "m")
-    * @param ageIDs list of ageID strings (e.g. ["0_4_yrs", "5_9_yrs"])
-    * @return list of GapResult
+     * Get health gap results for multiple health conditions, view by condition (returns diseaseName), parameterized for user-chosen filters.
+     * @param status1 statusID for group 1
+     * @param status2 statusID for group 2
+     * @param sex sexID ("both", "f", "m")
+     * @param conditionIDs list of health conditionIDs
+    * @return list of HealthGapResult
+     */
+    public ArrayList<HealthGapResult> getHealthGapMultiConditionByDisease(String status1, String status2, String sex, java.util.List<String> conditionIDs) {
+        ArrayList<HealthGapResult> results = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // Build IN clause for conditionIDs
+            StringBuilder condIn = new StringBuilder();
+            if (conditionIDs != null && !conditionIDs.isEmpty()) {
+                condIn.append("('");
+                condIn.append(String.join("','", conditionIDs));
+                condIn.append("')");
+            } else {
+                condIn.append("('')");
+            }
+
+            // Build sex filter for SQL
+            String sexJoin = "";
+            String sexWhere = "";
+            if (!"both".equalsIgnoreCase(sex)) {
+                sexJoin = " AND h1.sexID = h2.sexID ";
+                sexWhere = " AND h1.sexID = '" + sex + "' ";
+            }
+
+            String subquery =
+                "SELECT h1.lgaCode, LGA.lgaName, healthCondition.diseaseName, " +
+                "SUM(h1.populationValue) AS status1Value, " +
+                "SUM(h2.populationValue) AS status2Value, " +
+                "SUM(h2.populationValue) - SUM(h1.populationValue) AS gap " +
+                "FROM Health h1 " +
+                "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + " " +
+                "JOIN LGA ON h1.lgaCode = LGA.lgaCode " +
+                "JOIN healthCondition ON h1.conditionID = healthCondition.conditionID " +
+                "WHERE h1.year = %YEAR% " +
+                "AND h1.statusID = '" + status1 + "' " +
+                "AND h2.statusID = '" + status2 + "' " +
+                sexWhere +
+                " AND h1.conditionID IN " + condIn.toString() + " " +
+                "GROUP BY h1.lgaCode, healthCondition.diseaseName";
+
+            String sub2016 = subquery.replace("%YEAR%", "2016");
+            String sub2021 = subquery.replace("%YEAR%", "2021");
+
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT y2021.lgaName AS lga, y2021.diseaseName, ");
+            query.append("y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
+            query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
+            query.append("FROM (").append(sub2016).append(") y2016 ");
+            query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
+            query.append("ON y2016.lgaCode = y2021.lgaCode AND y2016.diseaseName = y2021.diseaseName");
+
+            ResultSet rs = statement.executeQuery(query.toString());
+            while (rs.next()) {
+                String lga = rs.getString("lga");
+                String diseaseName = rs.getString("diseaseName");
+                Integer status1_2016 = rs.getObject("status1_2016") != null ? rs.getInt("status1_2016") : null;
+                Integer status2_2016 = rs.getObject("status2_2016") != null ? rs.getInt("status2_2016") : null;
+                Integer gap_2016 = rs.getObject("gap_2016") != null ? rs.getInt("gap_2016") : null;
+                Integer status1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
+                Integer status2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
+                Integer gap_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
+                results.add(new HealthGapResult(lga, diseaseName, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Get health gap results for multiple health conditions, view by total (no diseaseName), parameterized for user-chosen filters.
+     * @param status1 statusID for group 1
+     * @param status2 statusID for group 2
+     * @param sex sexID ("both", "f", "m")
+     * @param conditionIDs list of health conditionIDs
+     * @return list of PopulationGapResult
+     */
+    public ArrayList<PopulationGapResult> getHealthGapMultiConditionTotal(String status1, String status2, String sex, java.util.List<String> conditionIDs) {
+        ArrayList<PopulationGapResult> results = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // Build IN clause for conditionIDs
+            StringBuilder condIn = new StringBuilder();
+            if (conditionIDs != null && !conditionIDs.isEmpty()) {
+                condIn.append("('");
+                condIn.append(String.join("','", conditionIDs));
+                condIn.append("')");
+            } else {
+                condIn.append("('')");
+            }
+
+            // Build sex filter for SQL
+            String sexJoin = "";
+            String sexWhere = "";
+            if (!"both".equalsIgnoreCase(sex)) {
+                sexJoin = " AND h1.sexID = h2.sexID ";
+                sexWhere = " AND h1.sexID = '" + sex + "' ";
+            }
+
+            String subquery =
+                "SELECT h1.lgaCode, LGA.lgaName, " +
+                "SUM(h1.populationValue) AS status1Value, " +
+                "SUM(h2.populationValue) AS status2Value, " +
+                "SUM(h2.populationValue) - SUM(h1.populationValue) AS gap " +
+                "FROM Health h1 " +
+                "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + " " +
+                "JOIN LGA ON h1.lgaCode = LGA.lgaCode " +
+                "WHERE h1.year = %YEAR% " +
+                "AND h1.statusID = '" + status1 + "' " +
+                "AND h2.statusID = '" + status2 + "' " +
+                sexWhere +
+                " AND h1.conditionID IN " + condIn.toString() + " " +
+                "GROUP BY h1.lgaCode";
+
+            String sub2016 = subquery.replace("%YEAR%", "2016");
+            String sub2021 = subquery.replace("%YEAR%", "2021");
+
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT y2021.lgaName AS lga, ");
+            query.append("y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
+            query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
+            query.append("FROM (").append(sub2016).append(") y2016 ");
+            query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
+            query.append("ON y2016.lgaCode = y2021.lgaCode");
+
+            ResultSet rs = statement.executeQuery(query.toString());
+            while (rs.next()) {
+                String lga = rs.getString("lga");
+                Integer status1_2016 = rs.getObject("status1_2016") != null ? rs.getInt("status1_2016") : null;
+                Integer status2_2016 = rs.getObject("status2_2016") != null ? rs.getInt("status2_2016") : null;
+                Integer gap_2016 = rs.getObject("gap_2016") != null ? rs.getInt("gap_2016") : null;
+                Integer status1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
+                Integer status2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
+                Integer gap_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
+                results.add(new PopulationGapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return results;
+    }
+    
+    /**
+     * Get population gap results for the Population dataset, flexible for user-chosen status, sex, and age group filters.
+     * @param status1 statusID for group 1 (e.g. indig)
+     * @param status2 statusID for group 2 (e.g. non_indig)
+     * @param sex sexID ("both", "f", "m")
+     * @param ageIDs list of ageID strings (e.g. ["0_4_yrs", "5_9_yrs"])
+     * @return list of PopulationGapResult
     */
-    public ArrayList<GapResult> getPopulationGapResults(String status1, String status2, String sex, java.util.List<String> ageIDs) {
-        ArrayList<GapResult> results = new ArrayList<>();
+    public ArrayList<PopulationGapResult> getPopulationGapResults(String status1, String status2, String sex, java.util.List<String> ageIDs) {
+        ArrayList<PopulationGapResult> results = new ArrayList<>();
         Connection connection = null;
         try {
             connection = DriverManager.getConnection(DATABASE);
@@ -147,7 +391,7 @@ public class JDBCConnection {
                 Integer status1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
                 Integer status2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
                 Integer gap_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
-                results.add(new GapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+                results.add(new PopulationGapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
             }
             statement.close();
         } catch (SQLException e) {

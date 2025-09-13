@@ -84,10 +84,31 @@
             <div th:if="${dataset == 'Health'}">
                 <label>Health Conditions:</label>
                 <div th:each="h : ${healthList}">
-                    <input type="checkbox" name="healthIDs" th:value="${h.conditionID}" th:checked="${selectedHealthIDs != null and #lists.contains(selectedHealthIDs, h.conditionID)}" />
+                    <input type="checkbox" class="health-checkbox" name="healthIDs" th:value="${h.conditionID}" th:checked="${selectedHealthIDs != null and #lists.contains(selectedHealthIDs, h.conditionID)}" />
                     <span th:text="${h.diseaseName}"></span>
                 </div>
-                <div style="color:red;">No data for 2016 is provided. 2016 values will show N/A.</div>
+                <!-- View by options, always rendered but hidden/shown by JS -->
+                <div id="healthViewModeDiv" style="display:none; margin-top:0.5em;">
+                    <label>View by:</label>
+                    <input type="radio" name="healthViewMode" value="byCondition" th:checked="${healthViewMode == null or healthViewMode == 'byCondition'}"/> By Condition
+                    <input type="radio" name="healthViewMode" value="byTotal" th:checked="${healthViewMode == 'byTotal'}"/> By Total
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    function updateHealthViewModeVisibility() {
+                        var checkboxes = document.querySelectorAll('.health-checkbox');
+                        var checkedCount = 0;
+                        checkboxes.forEach(function(cb) { if (cb.checked) checkedCount++; });
+                        var viewDiv = document.getElementById('healthViewModeDiv');
+                        if (viewDiv) viewDiv.style.display = (checkedCount > 1) ? '' : 'none';
+                    }
+                    var checkboxes = document.querySelectorAll('.health-checkbox');
+                    checkboxes.forEach(function(cb) {
+                        cb.addEventListener('change', updateHealthViewModeVisibility);
+                    });
+                    updateHealthViewModeVisibility(); // Initial call
+                });
+                </script>
             </div>
             <!-- Education: Dropdown -->
             <div th:if="${dataset == 'Education'}">
@@ -159,6 +180,70 @@
                 </table>
             </div>
             <div th:if="${populationGapResults == null}">
+                <p style="color:gray;">Please select all filters to view results.</p>
+            </div>
+        </div>
+        <!-- Health Gap Results Table -->
+        <div th:if="${dataset == 'Health'}">
+            <div th:if="${healthGapResults != null}">
+                <h3>Health Gap Results</h3>
+                <div style="margin-bottom:0.5em; color:#555; font-size:0.95em;">
+                    <b>Note:</b> <span style="color:#b00;">N/A</span> means there is no such LGA in that year for the selected filters.
+                </div>
+                <!-- View by condition -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${healthGapResultType == 'byCondition'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th>Disease</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${healthGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td th:text="${row.diseaseName}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- View by total or single condition -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${healthGapResultType == 'total' or healthGapResultType == 'single'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${healthGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${healthGapResults == null}">
                 <p style="color:gray;">Please select all filters to view results.</p>
             </div>
         </div>

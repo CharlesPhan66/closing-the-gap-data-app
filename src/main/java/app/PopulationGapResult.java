@@ -1,6 +1,6 @@
 package app;
 
-public class GapResult {
+public class PopulationGapResult {
     public String lga;
     public Integer status1_2016;
     public Integer status2_2016;
@@ -9,7 +9,7 @@ public class GapResult {
     public Integer status2_2021;
     public Integer gap_2021;
 
-    public GapResult(String lga, Integer status1_2016, Integer status2_2016, Integer gap_2016, Integer status1_2021, Integer status2_2021, Integer gap_2021) {
+    public PopulationGapResult(String lga, Integer status1_2016, Integer status2_2016, Integer gap_2016, Integer status1_2021, Integer status2_2021, Integer gap_2021) {
         this.lga = lga;
         this.status1_2016 = status1_2016;
         this.status2_2016 = status2_2016;

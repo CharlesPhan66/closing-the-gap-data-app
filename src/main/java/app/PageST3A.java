@@ -90,8 +90,10 @@ public class PageST3A implements Handler {
             sex1 = context.formParam("sex1");
             if (sex1 == null || sex1.isEmpty()) sex1 = "both";
         }
-        List<String> selectedHealthIDs = context.formParams("healthIDs");
-        if (selectedHealthIDs != null && selectedHealthIDs.isEmpty()) selectedHealthIDs = null;
+    List<String> selectedHealthIDs = context.formParams("healthIDs");
+    if (selectedHealthIDs != null && selectedHealthIDs.isEmpty()) selectedHealthIDs = null;
+    String healthViewMode = context.formParam("healthViewMode");
+    if (healthViewMode == null || healthViewMode.isEmpty()) healthViewMode = "byCondition";
         String edu = context.formParam("eduLevel");
         if (edu != null && edu.isEmpty()) edu = null;
         List<String> selectedNonSchoolIDs = context.formParams("nonSchoolIDs");
@@ -99,6 +101,25 @@ public class PageST3A implements Handler {
 
         // For Population: get all age group IDs in selected range
         List<String> selectedAgeGroupIDs = null;
+        String status1Name = null, status2Name = null;
+        if (status1 != null) {
+            for (IndigStatus s : statusList) {
+                if (status1.equals(s.getStatusID())) {
+                    status1Name = s.getStatusName();
+                    break;
+                }
+            }
+        }
+        if (status2 != null) {
+            for (IndigStatus s : statusList) {
+                if (status2.equals(s.getStatusID())) {
+                    status2Name = s.getStatusName();
+                    break;
+                }
+            }
+        }
+        model.put("status1Name", status1Name);
+        model.put("status2Name", status2Name);
         if ("Population".equals(dataset)) {
             if (selectedAgeStart != null) {
                 selectedAgeGroupIDs = new ArrayList<>();
@@ -116,29 +137,9 @@ public class PageST3A implements Handler {
                     }
                 }
             }
-            // Get status names for table headers
-            String status1Name = null, status2Name = null;
-            if (status1 != null) {
-                for (IndigStatus s : statusList) {
-                    if (status1.equals(s.getStatusID())) {
-                        status1Name = s.getStatusName();
-                        break;
-                    }
-                }
-            }
-            if (status2 != null) {
-                for (IndigStatus s : statusList) {
-                    if (status2.equals(s.getStatusID())) {
-                        status2Name = s.getStatusName();
-                        break;
-                    }
-                }
-            }
-            model.put("status1Name", status1Name);
-            model.put("status2Name", status2Name);
             // Get population gap results if all required filters are selected
             if (status1 != null && status2 != null && sex1 != null && selectedAgeGroupIDs != null && !selectedAgeGroupIDs.isEmpty()) {
-                ArrayList<GapResult> populationGapResults = jdbc.getPopulationGapResults(status1, status2, sex1, selectedAgeGroupIDs);
+                ArrayList<PopulationGapResult> populationGapResults = jdbc.getPopulationGapResults(status1, status2, sex1, selectedAgeGroupIDs);
                 model.put("populationGapResults", populationGapResults);
             } else {
                 model.put("populationGapResults", null);
@@ -164,6 +165,7 @@ public class PageST3A implements Handler {
     model.put("ageEndList", ageEndList);
     model.put("selectedAgeStart", selectedAgeStart);
     model.put("selectedAgeEnd", selectedAgeEnd);
+    model.put("healthViewMode", healthViewMode);
     
     System.out.println("Chosen dataset: " + (dataset == null ? "null" : dataset));
     System.out.println("Chosen status1: " + status1);
@@ -190,8 +192,27 @@ public class PageST3A implements Handler {
     if ("Health".equals(dataset)) {
         if (selectedHealthIDs != null && !selectedHealthIDs.isEmpty()) {
             System.out.println("Chosen health condition(s): " + String.join(", ", selectedHealthIDs));
+            // Health gap logic
+            if (selectedHealthIDs.size() == 1) {
+                // Single condition
+                ArrayList<PopulationGapResult> healthGapResults = jdbc.getHealthGapSingleCondition(status1, status2, sex1, selectedHealthIDs.get(0));
+                model.put("healthGapResults", healthGapResults);
+                model.put("healthGapResultType", "single");
+            } else if (selectedHealthIDs.size() > 1) {
+                if ("byTotal".equals(healthViewMode)) {
+                    ArrayList<PopulationGapResult> healthGapResults = jdbc.getHealthGapMultiConditionTotal(status1, status2, sex1, selectedHealthIDs);
+                    model.put("healthGapResults", healthGapResults);
+                    model.put("healthGapResultType", "total");
+                } else {
+                    ArrayList<HealthGapResult> healthGapResults = jdbc.getHealthGapMultiConditionByDisease(status1, status2, sex1, selectedHealthIDs);
+                    model.put("healthGapResults", healthGapResults);
+                    model.put("healthGapResultType", "byCondition");
+                }
+            }
         } else {
             System.out.println("Chosen health condition(s): none");
+            model.put("healthGapResults", null);
+            model.put("healthGapResultType", null);
         }
     }
     if ("Education".equals(dataset)) {
