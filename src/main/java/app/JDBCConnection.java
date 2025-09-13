@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.PreparedStatement; // Add this import
 
 /**
  * Class for Managing the JDBC Connection to a SQLLite Database.
@@ -1365,7 +1366,9 @@ public class JDBCConnection {
             System.err.println(e.getMessage());
         } finally {
             try {
-                if (connection != null) connection.close();
+                if (connection != null) {
+                    connection.close();
+                }
             } catch (SQLException e) {
                 System.err.println(e.getMessage());
             }
@@ -1518,4 +1521,100 @@ public class JDBCConnection {
         return summaryList;
     }
 
+    /**
+     * Gets a list of all unique LGAs for dropdowns.
+     * This method is designed to avoid constructor conflicts by only fetching what is needed.
+     */
+    public ArrayList<LGA> getLGAsAll() {
+        ArrayList<LGA> lgas = new ArrayList<>();
+        // FIX: Corrected SQL column names from lga_code/lga_name to lgaCode/lgaName
+        String query = "SELECT DISTINCT lgaCode, lgaName FROM LGA ORDER BY lgaName";
+        try (Connection connection = DriverManager.getConnection(DATABASE);
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(query)) {
+            while (rs.next()) {
+                // Use the constructor LGA(String, String, int) which is confirmed to exist.
+                // We provide a default year of 0 since it's not needed for this dropdown.
+                // FIX: Use corrected column names to retrieve data from the ResultSet.
+                lgas.add(new LGA(rs.getString("lgaCode"), rs.getString("lgaName"), 0));
+            }
+        } catch (SQLException e) {
+            System.err.println("JDBC Error in getLGAsAll: " + e.getMessage());
+        }
+        return lgas;
+    }
+
+    /**
+     * Finds LGAs with the most similar population counts based on user-selected criteria.
+     */
+    public ArrayList<SimilarityResult> findSimilarLGAs(String selectedLgaCode, int year, String outcome, String statusID, int ageMin, int ageMax, String categoryID, int numLgas) {
+        ArrayList<SimilarityResult> similarLgas = new ArrayList<>();
+        String tableName = "";
+        String categoryColumn = "";
+
+        switch (outcome) {
+            case "health": tableName = "Health"; categoryColumn = "conditionID"; break;
+            case "education": tableName = "Education"; categoryColumn = "levelID"; break;
+            case "nonSchool": tableName = "NonSchoolEdu"; categoryColumn = "d_cID"; break;
+            default: tableName = "Population"; categoryColumn = "sexID"; break;
+        }
+
+        // FIX: Changed table name from 'Age' to 'ageGroup' to match the database schema.
+        String queryTemplate = """
+            WITH TargetValue AS (
+                SELECT SUM(T.populationValue) as value
+                FROM %s T
+                JOIN ageGroup A ON T.ageID = A.ageID
+                WHERE T.lgaCode = ? AND T.year = ? %s
+            ),
+            AllLgaValues AS (
+                SELECT L.lgaCode, L.lgaName, SUM(T.populationValue) as value
+                FROM %s T
+                JOIN LGA L ON T.lgaCode = L.lgaCode AND T.year = L.year
+                JOIN ageGroup A ON T.ageID = A.ageID
+                WHERE T.year = ? %s
+                GROUP BY L.lgaCode, L.lgaName
+            )
+            SELECT V.lgaCode, V.lgaName, IFNULL(V.value, 0) as population, ABS(IFNULL(V.value, 0) - IFNULL((SELECT value FROM TargetValue), 0)) as similarity_diff
+            FROM AllLgaValues V
+            ORDER BY similarity_diff ASC
+            LIMIT ?
+        """;
+
+        StringBuilder conditions = new StringBuilder();
+        if (statusID != null && !statusID.equals("none")) {
+            conditions.append(" AND T.statusID = '").append(statusID).append("'");
+        }
+        if (ageMin >= 0 && ageMax > ageMin) {
+            conditions.append(" AND A.ageStart >= ").append(ageMin).append(" AND A.ageEnd <= ").append(ageMax);
+        }
+        if (categoryID != null && !categoryID.equals("none") && !outcome.equals("population")) {
+            conditions.append(" AND T.").append(categoryColumn).append(" = '").append(categoryID).append("'");
+        }
+
+        String finalQuery = String.format(queryTemplate, tableName, conditions.toString(), tableName, conditions.toString());
+
+        try (Connection connection = DriverManager.getConnection(DATABASE);
+             PreparedStatement statement = connection.prepareStatement(finalQuery)) {
+            
+            statement.setString(1, selectedLgaCode);
+            statement.setInt(2, year);
+            statement.setInt(3, year);
+            statement.setInt(4, numLgas);
+
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                similarLgas.add(new SimilarityResult(
+                    rs.getString("lgaCode"),
+                    rs.getString("lgaName"),
+                    rs.getInt("population"),
+                    rs.getInt("similarity_diff")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in findSimilarLGAs: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return similarLgas;
+    }
 }
