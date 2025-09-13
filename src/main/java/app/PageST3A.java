@@ -76,21 +76,19 @@ public class PageST3A implements Handler {
         }
 
         // Get filter values, leave as null if not chosen
-        String status1, status2, sex1, sex2;
+    String status1, status2, sex1;
         if (datasetChanged) {
             status1 = null;
             status2 = null;
-            sex1 = null;
-            sex2 = null;
+            sex1 = "both";
         } else {
             status1 = context.formParam("status1");
             if (status1 != null && status1.isEmpty()) status1 = null;
             status2 = context.formParam("status2");
             if (status2 != null && status2.isEmpty()) status2 = null;
+            if (status1 != null && status1.equals(status2)) status2 = null;
             sex1 = context.formParam("sex1");
-            if (sex1 != null && sex1.isEmpty()) sex1 = null;
-            sex2 = context.formParam("sex2");
-            if (sex2 != null && sex2.isEmpty()) sex2 = null;
+            if (sex1 == null || sex1.isEmpty()) sex1 = "both";
         }
         List<String> selectedHealthIDs = context.formParams("healthIDs");
         if (selectedHealthIDs != null && selectedHealthIDs.isEmpty()) selectedHealthIDs = null;
@@ -118,6 +116,13 @@ public class PageST3A implements Handler {
                     }
                 }
             }
+            // Get population gap results if all required filters are selected
+            if (status1 != null && status2 != null && sex1 != null && selectedAgeGroupIDs != null && !selectedAgeGroupIDs.isEmpty()) {
+                ArrayList<GapResult> populationGapResults = jdbc.getPopulationGapResults(status1, status2, sex1, selectedAgeGroupIDs);
+                model.put("populationGapResults", populationGapResults);
+            } else {
+                model.put("populationGapResults", null);
+            }
         }
 
     // Add lists and filter values to model
@@ -131,7 +136,6 @@ public class PageST3A implements Handler {
     model.put("status1", status1);
     model.put("status2", status2);
     model.put("sex1", sex1);
-    model.put("sex2", sex2);
     model.put("selectedAgeGroupIDs", selectedAgeGroupIDs);
     model.put("selectedHealthIDs", selectedHealthIDs);
     model.put("edu", edu);
@@ -144,8 +148,7 @@ public class PageST3A implements Handler {
     System.out.println("Chosen dataset: " + (dataset == null ? "null" : dataset));
     System.out.println("Chosen status1: " + status1);
     System.out.println("Chosen status2: " + status2);
-    System.out.println("Chosen sex1: " + sex1);
-    System.out.println("Chosen sex2: " + sex2);
+    System.out.println("Chosen sex: " + sex1);
     if ("Population".equals(dataset)) {
         if (selectedAgeGroupIDs != null && !selectedAgeGroupIDs.isEmpty()) {
             // Print string IDs (e.g., 0_4_yrs) and their ranges for debug

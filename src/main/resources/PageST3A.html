@@ -44,27 +44,24 @@
             </select>
             <br/>
             <label for="status1">Status 1:</label>
-            <select name="status1" id="status1">
+            <select name="status1" id="status1" onchange="this.form.submit()">
                 <option value="" th:selected="${status1 == null}">--Select status--</option>
                 <option th:each="s : ${statusList}" th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${status1 == s.statusID}"></option>
             </select>
             <label for="status2">Status 2:</label>
             <select name="status2" id="status2">
                 <option value="" th:selected="${status2 == null}">--Select status--</option>
-                <option th:each="s : ${statusList}" th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${status2 == s.statusID}"></option>
+                <option th:each="s : ${statusList}"
+                        th:value="${s.statusID}"
+                        th:text="${s.statusName}"
+                        th:selected="${status2 == s.statusID}"
+                        th:disabled="${status1 != null and s.statusID == status1}"></option>
             </select>
             <br/>
             <label for="sex1">Sex 1:</label>
             <select name="sex1" id="sex1">
-                <option value="" th:selected="${sex1 == null}">--Select gender--</option>
                 <option value="both" th:selected="${sex1 == 'both'}">Both</option>
                 <option th:each="g : ${sexList}" th:value="${g.sexID}" th:text="${g.sex}" th:selected="${sex1 == g.sexID}"></option>
-            </select>
-            <label for="sex2">Sex 2:</label>
-            <select name="sex2" id="sex2">
-                <option value="" th:selected="${sex2 == null}">--Select gender--</option>
-                <option value="both" th:selected="${sex2 == 'both'}">Both</option>
-                <option th:each="g : ${sexList}" th:value="${g.sexID}" th:text="${g.sex}" th:selected="${sex2 == g.sexID}"></option>
             </select>
             <br/>
             <!-- Population: Age group filter -->
@@ -77,7 +74,7 @@
                 <span th:if="${selectedAgeStart != null && selectedAgeStart == 65}"> (65 and over)</span>
                 <span th:if="${selectedAgeStart != null && selectedAgeStart < 65}">
                     <label for="ageEnd">Age End:</label>
-                    <select name="ageEnd" id="ageEnd" onchange="this.form.submit()">
+                    <select name="ageEnd" id="ageEnd">
                         <option value="" th:selected="${selectedAgeEnd == null}">--Select end--</option>
                         <option th:each="end : ${ageEndList}" th:value="${end}" th:text="${end}" th:selected="${selectedAgeEnd == end}"></option>
                     </select>
@@ -111,6 +108,60 @@
             <br/>
             <button type="submit">Apply</button>
         </form>
+        <!-- Population Gap Results Table -->
+        <div th:if="${dataset == 'Population'}">
+            <div th:if="${populationGapResults != null}">
+                <h3>Population Gap Results</h3>
+                <div style="margin-bottom:0.5em; color:#555; font-size:0.95em;">
+                    <b>Note:</b> <span style="color:#b00;">N/A</span> means there is no such LGA in that year for the selected filters.
+                </div>
+                <table border="1" cellpadding="5" style="border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th>Status1 2016</th>
+                            <th>Status2 2016</th>
+                            <th>Gap 2016</th>
+                            <th>Status1 2021</th>
+                            <th>Status2 2021</th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${populationGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td>
+                                <span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span>
+                                <span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                            </td>
+                            <td>
+                                <span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span>
+                                <span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                            </td>
+                            <td>
+                                <span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span>
+                                <span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                            </td>
+                            <td>
+                                <span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span>
+                                <span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                            </td>
+                            <td>
+                                <span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span>
+                                <span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                            </td>
+                            <td>
+                                <span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span>
+                                <span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${populationGapResults == null}">
+                <p style="color:gray;">Please select all filters to view results.</p>
+            </div>
+        </div>
     </div>
 
     <div class='footer'>

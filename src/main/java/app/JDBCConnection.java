@@ -27,6 +27,90 @@ public class JDBCConnection {
     }
 
     /**
+    * Get population gap results for the Population dataset, flexible for user-chosen status, sex, and age group filters.
+    * @param status1 statusID for group 1 (e.g. indig)
+    * @param status2 statusID for group 2 (e.g. non_indig)
+    * @param sex sexID ("both", "f", "m")
+    * @param ageIDs list of ageID strings (e.g. ["0_4_yrs", "5_9_yrs"])
+    * @return list of GapResult
+    */
+    public ArrayList<GapResult> getPopulationGapResults(String status1, String status2, String sex, java.util.List<String> ageIDs) {
+        ArrayList<GapResult> results = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // Build IN clause for ageIDs
+            StringBuilder ageIn = new StringBuilder();
+            if (ageIDs != null && !ageIDs.isEmpty()) {
+                ageIn.append("('");
+                ageIn.append(String.join("','", ageIDs));
+                ageIn.append("')");
+            } else {
+                ageIn.append("('')");
+            }
+
+            // Sex filter logic
+            String sexJoin = "";
+            String sexWhere = "";
+            if (!"both".equalsIgnoreCase(sex)) {
+                sexJoin = " AND p1.sexID = p2.sexID ";
+                sexWhere = " AND p1.sexID = '" + sex + "' ";
+            }
+
+            // Query for 2016 and 2021 subqueries
+            String subquery =
+                "SELECT p1.lgaCode, LGA.lgaName, " +
+                "SUM(p1.populationValue) AS status1Value, " +
+                "SUM(p2.populationValue) AS status2Value, " +
+                "SUM(p2.populationValue) - SUM(p1.populationValue) AS gap " +
+                "FROM Population p1 " +
+                "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin + " " +
+                "JOIN LGA ON p1.lgaCode = LGA.lgaCode " +
+                "WHERE p1.year = %YEAR% " +
+                "AND p1.statusID = '" + status1 + "' " +
+                "AND p2.statusID = '" + status2 + "' " +
+                "AND p1.ageID IN " + ageIn.toString() + sexWhere + " " +
+                "GROUP BY p1.lgaCode";
+
+            String sub2016 = subquery.replace("%YEAR%", "2016");
+            String sub2021 = subquery.replace("%YEAR%", "2021");
+
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT y2021.lgaName AS lga, ");
+            query.append("y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
+            query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
+            query.append("FROM (").append(sub2016).append(") y2016 ");
+            query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
+            query.append("ON y2016.lgaCode = y2021.lgaCode");
+
+            ResultSet rs = statement.executeQuery(query.toString());
+            while (rs.next()) {
+                String lga = rs.getString("lga");
+                Integer status1_2016 = rs.getObject("status1_2016") != null ? rs.getInt("status1_2016") : null;
+                Integer status2_2016 = rs.getObject("status2_2016") != null ? rs.getInt("status2_2016") : null;
+                Integer gap_2016 = rs.getObject("gap_2016") != null ? rs.getInt("gap_2016") : null;
+                Integer status1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
+                Integer status2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
+                Integer gap_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
+                results.add(new GapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return results;
+    }
+
+    /**
      * Get Health records summarized by demographics.
      * if any filter is null, instead of listing all records for that filter, using aggregate the populationValue.
      * Example: if statusID is null, then get total populationValue for all statusID.
