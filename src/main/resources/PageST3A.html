@@ -119,11 +119,11 @@
                     <thead>
                         <tr>
                             <th>LGA</th>
-                            <th>Status1 2016</th>
-                            <th>Status2 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
                             <th>Gap 2016</th>
-                            <th>Status1 2021</th>
-                            <th>Status2 2021</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
                             <th>Gap 2021</th>
                         </tr>
                     </thead>

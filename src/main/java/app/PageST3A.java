@@ -116,6 +116,26 @@ public class PageST3A implements Handler {
                     }
                 }
             }
+            // Get status names for table headers
+            String status1Name = null, status2Name = null;
+            if (status1 != null) {
+                for (IndigStatus s : statusList) {
+                    if (status1.equals(s.getStatusID())) {
+                        status1Name = s.getStatusName();
+                        break;
+                    }
+                }
+            }
+            if (status2 != null) {
+                for (IndigStatus s : statusList) {
+                    if (status2.equals(s.getStatusID())) {
+                        status2Name = s.getStatusName();
+                        break;
+                    }
+                }
+            }
+            model.put("status1Name", status1Name);
+            model.put("status2Name", status2Name);
             // Get population gap results if all required filters are selected
             if (status1 != null && status2 != null && sex1 != null && selectedAgeGroupIDs != null && !selectedAgeGroupIDs.isEmpty()) {
                 ArrayList<GapResult> populationGapResults = jdbc.getPopulationGapResults(status1, status2, sex1, selectedAgeGroupIDs);

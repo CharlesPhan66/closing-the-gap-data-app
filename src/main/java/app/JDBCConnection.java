@@ -42,6 +42,58 @@ public class JDBCConnection {
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
+            // SELECT 
+            //     y2021.lgaName AS lga,
+            //     y2016.status1Value AS indig_2016,
+            //     y2016.status2Value AS non_indig_2016,
+            //     y2016.gap AS gap_2016,
+            //     y2021.status1Value AS indig_2021,
+            //     y2021.status2Value AS non_indig_2021,
+            //     y2021.gap AS gap_2021
+            // FROM (
+            //     SELECT
+            //         p1.lgaCode,
+            //         LGA.lgaName,
+            //         SUM(p1.populationValue) AS status1Value, 
+            //         SUM(p2.populationValue) AS status2Value,
+            //         SUM(p2.populationValue) - SUM(p1.populationValue) AS gap
+            //     FROM Population p1 
+            //     JOIN Population p2
+            //         ON p1.lgaCode = p2.lgaCode 
+            //         AND p1.year = p2.year 
+            //         AND p1.ageID = p2.ageID
+            //         AND p1.sexID = p2.sexID
+            //     JOIN LGA ON p1.lgaCode = LGA.lgaCode
+            //     WHERE p1.year = 2016 
+            //         AND p1.statusID = 'indig'
+            //         AND p2.statusID = 'non_indig'
+            //         AND p1.ageID IN (age groups selected)
+            //         AND p1.sexID = 'f'
+            //     GROUP BY p1.lgaCode
+            //     ) y2016
+            // RIGHT JOIN (
+            //     SELECT
+            //         p1.lgaCode,
+            //         LGA.lgaName,
+            //         SUM(p1.populationValue) AS status1Value, 
+            //         SUM(p2.populationValue) AS status2Value,
+            //         SUM(p2.populationValue) - SUM(p1.populationValue) AS gap
+            //     FROM Population p1 
+            //     JOIN Population p2
+            //         ON p1.lgaCode = p2.lgaCode 
+            //         AND p1.year = p2.year 
+            //         AND p1.ageID = p2.ageID
+            //         AND p1.sexID = p2.sexID
+            //     JOIN LGA ON p1.lgaCode = LGA.lgaCode
+            //     WHERE p1.year = 2021 
+            //         AND p1.statusID = 'indig'
+            //         AND p2.statusID = 'non_indig'
+            //         AND p1.ageID IN ()
+            //         AND p1.sexID = 'f'
+            //     GROUP BY p1.lgaCode
+            //     ) y2021
+            // ON y2016.lgaCode = y2021.lgaCode;
+            
             // Build IN clause for ageIDs
             StringBuilder ageIn = new StringBuilder();
             if (ageIDs != null && !ageIDs.isEmpty()) {
