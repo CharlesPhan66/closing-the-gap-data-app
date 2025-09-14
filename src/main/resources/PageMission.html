@@ -37,20 +37,12 @@
         </ul>
         <h2>Persona Information</h2>
         <ul>
-            <th:block th:each="persona : ${persona}">
-                <li th:text="${persona.quote}"></li>
-            </th:block>
-            <th:block th:each="persona : ${persona}">
-                <li th:text="${persona.background}"></li>
-            </th:block>
-            <th:block th:each="persona : ${persona}">
-                <li th:text="${persona.needs_goals}"></li>
-            </th:block>
-            <th:block th:each="persona : ${persona}">
-                <li th:text="${persona.pain_points}"></li>
-            </th:block>
-            <th:block th:each="persona : ${persona}">
-                <li th:text="${persona.skills_experience}"></li>
+            <th:block th:each="persona, iterStat : ${persona}">
+                <li th:if="${iterStat.index == 1}" th:text="${persona.quote}"></li>
+                <li th:if="${iterStat.index == 1}" th:text="${persona.background}"></li>
+                <li th:if="${iterStat.index == 1}" th:text="${persona.needs_goals}"></li>
+                <li th:if="${iterStat.index == 1}" th:text="${persona.pain_points}"></li>
+                <li th:if="${iterStat.index == 1}" th:text="${persona.skills_experience}"></li>
             </th:block>
         </ul>
      </div>
