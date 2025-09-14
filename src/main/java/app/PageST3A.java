@@ -214,9 +214,16 @@ public class PageST3A implements Handler {
                     }
                 }
             }
+            // Determine if view mode is needed (multiple age groups)
+            boolean populationViewModeNeeded = selectedAgeGroupIDs != null && selectedAgeGroupIDs.size() > 1;
+            model.put("populationViewModeNeeded", populationViewModeNeeded);
+            String populationViewMode = context.formParam("populationViewMode");
+            if (populationViewMode == null || populationViewMode.isEmpty()) populationViewMode = "byAgeGroups";
+            model.put("populationViewMode", populationViewMode);
             // Get population gap results only when user clicked Apply
             if ("apply".equals(submitAction) && status1 != null && status2 != null && sex1 != null && selectedAgeGroupIDs != null && !selectedAgeGroupIDs.isEmpty()) {
-                ArrayList<PopulationGapResult> populationGapResults = jdbc.getPopulationGapResults(status1, status2, sex1, selectedAgeGroupIDs);
+                // The actual SQL logic will be updated in the backend function next
+                ArrayList<PopulationGapResult> populationGapResults = jdbc.getPopulationGapResults(status1, status2, sex1, selectedAgeGroupIDs, populationViewMode);
                 model.put("populationGapResults", populationGapResults);
             } else {
                 model.put("populationGapResults", null);

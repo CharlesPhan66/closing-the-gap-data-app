@@ -520,7 +520,7 @@ public class JDBCConnection {
      * @param ageIDs list of ageID strings (e.g. ["0_4_yrs", "5_9_yrs"])
      * @return list of PopulationGapResult
     */
-    public ArrayList<PopulationGapResult> getPopulationGapResults(String status1, String status2, String sex, java.util.List<String> ageIDs) {
+    public ArrayList<PopulationGapResult> getPopulationGapResults(String status1, String status2, String sex, java.util.List<String> ageIDs, String viewMode) {
         ArrayList<PopulationGapResult> results = new ArrayList<>();
         Connection connection = null;
         try {
@@ -528,58 +528,6 @@ public class JDBCConnection {
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
-            // SELECT 
-            //     y2021.lgaName AS lga,
-            //     y2016.status1Value AS indig_2016,
-            //     y2016.status2Value AS non_indig_2016,
-            //     y2016.gap AS gap_2016,
-            //     y2021.status1Value AS indig_2021,
-            //     y2021.status2Value AS non_indig_2021,
-            //     y2021.gap AS gap_2021
-            // FROM (
-            //     SELECT
-            //         p1.lgaCode,
-            //         LGA.lgaName,
-            //         SUM(p1.populationValue) AS status1Value, 
-            //         SUM(p2.populationValue) AS status2Value,
-            //         SUM(p2.populationValue) - SUM(p1.populationValue) AS gap
-            //     FROM Population p1 
-            //     JOIN Population p2
-            //         ON p1.lgaCode = p2.lgaCode 
-            //         AND p1.year = p2.year 
-            //         AND p1.ageID = p2.ageID
-            //         AND p1.sexID = p2.sexID
-            //     JOIN LGA ON p1.lgaCode = LGA.lgaCode
-            //     WHERE p1.year = 2016 
-            //         AND p1.statusID = 'indig'
-            //         AND p2.statusID = 'non_indig'
-            //         AND p1.ageID IN (age groups selected)
-            //         AND p1.sexID = 'f'
-            //     GROUP BY p1.lgaCode
-            //     ) y2016
-            // RIGHT JOIN (
-            //     SELECT
-            //         p1.lgaCode,
-            //         LGA.lgaName,
-            //         SUM(p1.populationValue) AS status1Value, 
-            //         SUM(p2.populationValue) AS status2Value,
-            //         SUM(p2.populationValue) - SUM(p1.populationValue) AS gap
-            //     FROM Population p1 
-            //     JOIN Population p2
-            //         ON p1.lgaCode = p2.lgaCode 
-            //         AND p1.year = p2.year 
-            //         AND p1.ageID = p2.ageID
-            //         AND p1.sexID = p2.sexID
-            //     JOIN LGA ON p1.lgaCode = LGA.lgaCode
-            //     WHERE p1.year = 2021 
-            //         AND p1.statusID = 'indig'
-            //         AND p2.statusID = 'non_indig'
-            //         AND p1.ageID IN ()
-            //         AND p1.sexID = 'f'
-            //     GROUP BY p1.lgaCode
-            //     ) y2021
-            // ON y2016.lgaCode = y2021.lgaCode;
-            
             // Build IN clause for ageIDs
             StringBuilder ageIn = new StringBuilder();
             if (ageIDs != null && !ageIDs.isEmpty()) {
@@ -590,39 +538,97 @@ public class JDBCConnection {
                 ageIn.append("('')");
             }
 
-            // Sex filter logic
-            String sexJoin = "";
-            String sexWhere = "";
-            if (!"both".equalsIgnoreCase(sex)) {
-                sexJoin = " AND p1.sexID = p2.sexID ";
-                sexWhere = " AND p1.sexID = '" + sex + "' ";
+            boolean bothSex = "both".equalsIgnoreCase(sex);
+            boolean singleAge = (ageIDs != null && ageIDs.size() == 1);
+            boolean multiAge = (ageIDs != null && ageIDs.size() > 1);
+            boolean byTotal = multiAge && "byTotal".equals(viewMode);
+            boolean byAgeGroups = multiAge && "byAgeGroups".equals(viewMode);
+
+            String sexJoin = bothSex ? " AND p1.sexID = p2.sexID " : " AND p1.sexID = p2.sexID ";
+            String sexWhere = bothSex ? "" : (" AND p1.sexID = '" + sex + "'");
+
+            String select2016, select2021, joinOn;
+            if (singleAge || byTotal) {
+                // Single age group or multi-age by total
+                String selectAgg = bothSex ?
+                    "SUM(p1.populationValue) AS status1Value, SUM(p2.populationValue) AS status2Value, SUM(p2.populationValue) - SUM(p1.populationValue) AS gap"
+                    :
+                    "p1.populationValue AS status1Value, p2.populationValue AS status2Value, p2.populationValue - p1.populationValue AS gap";
+                String groupBy = bothSex ? "GROUP BY p1.lgaCode, LGA.lgaName" : "GROUP BY p1.lgaCode";
+                select2016 =
+                    "SELECT p1.lgaCode, LGA.lgaName, " + selectAgg +
+                    " FROM Population p1 " +
+                    "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin +
+                    " JOIN LGA ON p1.lgaCode = LGA.lgaCode AND p1.year = LGA.year " +
+                    "WHERE p1.year = 2016 AND p1.statusID = '" + status1 + "' AND p2.statusID = '" + status2 + "' AND p1.ageID IN " + ageIn.toString() + sexWhere +
+                    " " + groupBy;
+                select2021 =
+                    "SELECT p1.lgaCode, LGA.lgaName, " + selectAgg +
+                    " FROM Population p1 " +
+                    "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin +
+                    " JOIN LGA ON p1.lgaCode = LGA.lgaCode AND p1.year = LGA.year " +
+                    "WHERE p1.year = 2021 AND p1.statusID = '" + status1 + "' AND p2.statusID = '" + status2 + "' AND p1.ageID IN " + ageIn.toString() + sexWhere +
+                    " " + groupBy;
+                joinOn = "ON y2021.lgaCode = y2016.lgaCode";
+            } else if (byAgeGroups) {
+                // Multi-age, view by age groups
+                String selectAgg = bothSex ?
+                    "SUM(p1.populationValue) AS status1Value, SUM(p2.populationValue) AS status2Value, SUM(p2.populationValue) - SUM(p1.populationValue) AS gap"
+                    :
+                    "p1.populationValue AS status1Value, p2.populationValue AS status2Value, p2.populationValue - p1.populationValue AS gap";
+                String groupBy = bothSex ? "GROUP BY p1.lgaCode, LGA.lgaName, ageGroup.ageStart, ageGroup.ageEnd" : "GROUP BY p1.lgaCode, ageGroup.ageStart, ageGroup.ageEnd";
+                select2016 =
+                    "SELECT p1.lgaCode, LGA.lgaName, ageGroup.ageStart, ageGroup.ageEnd, " + selectAgg +
+                    " FROM Population p1 " +
+                    "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin +
+                    " JOIN LGA ON p1.lgaCode = LGA.lgaCode AND p1.year = LGA.year " +
+                    " JOIN ageGroup ON p1.ageID = ageGroup.ageID " +
+                    "WHERE p1.year = 2016 AND p1.statusID = '" + status1 + "' AND p2.statusID = '" + status2 + "' AND p1.ageID IN " + ageIn.toString() + sexWhere +
+                    " " + groupBy;
+                select2021 =
+                    "SELECT p1.lgaCode, LGA.lgaName, ageGroup.ageStart, ageGroup.ageEnd, " + selectAgg +
+                    " FROM Population p1 " +
+                    "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin +
+                    " JOIN LGA ON p1.lgaCode = LGA.lgaCode AND p1.year = LGA.year " +
+                    " JOIN ageGroup ON p1.ageID = ageGroup.ageID " +
+                    "WHERE p1.year = 2021 AND p1.statusID = '" + status1 + "' AND p2.statusID = '" + status2 + "' AND p1.ageID IN " + ageIn.toString() + sexWhere +
+                    " " + groupBy;
+                joinOn = "ON y2021.lgaCode = y2016.lgaCode AND y2021.ageStart = y2016.ageStart AND y2021.ageEnd = y2016.ageEnd";
+            } else {
+                // fallback: treat as single age group by total
+                String selectAgg = bothSex ?
+                    "SUM(p1.populationValue) AS status1Value, SUM(p2.populationValue) AS status2Value, SUM(p2.populationValue) - SUM(p1.populationValue) AS gap"
+                    :
+                    "p1.populationValue AS status1Value, p2.populationValue AS status2Value, p2.populationValue - p1.populationValue AS gap";
+                String groupBy = bothSex ? "GROUP BY p1.lgaCode, LGA.lgaName" : "GROUP BY p1.lgaCode";
+                select2016 =
+                    "SELECT p1.lgaCode, LGA.lgaName, " + selectAgg +
+                    " FROM Population p1 " +
+                    "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin +
+                    " JOIN LGA ON p1.lgaCode = LGA.lgaCode AND p1.year = LGA.year " +
+                    "WHERE p1.year = 2016 AND p1.statusID = '" + status1 + "' AND p2.statusID = '" + status2 + "' AND p1.ageID IN " + ageIn.toString() + sexWhere +
+                    " " + groupBy;
+                select2021 =
+                    "SELECT p1.lgaCode, LGA.lgaName, " + selectAgg +
+                    " FROM Population p1 " +
+                    "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin +
+                    " JOIN LGA ON p1.lgaCode = LGA.lgaCode AND p1.year = LGA.year " +
+                    "WHERE p1.year = 2021 AND p1.statusID = '" + status1 + "' AND p2.statusID = '" + status2 + "' AND p1.ageID IN " + ageIn.toString() + sexWhere +
+                    " " + groupBy;
+                joinOn = "ON y2021.lgaCode = y2016.lgaCode";
             }
 
-            // Query for 2016 and 2021 subqueries
-            String subquery =
-                "SELECT p1.lgaCode, LGA.lgaName, " +
-                "SUM(p1.populationValue) AS status1Value, " +
-                "SUM(p2.populationValue) AS status2Value, " +
-                "SUM(p2.populationValue) - SUM(p1.populationValue) AS gap " +
-                "FROM Population p1 " +
-                "JOIN Population p2 ON p1.lgaCode = p2.lgaCode AND p1.year = p2.year AND p1.ageID = p2.ageID" + sexJoin + " " +
-                "JOIN LGA ON p1.lgaCode = LGA.lgaCode " +
-                "WHERE p1.year = %YEAR% " +
-                "AND p1.statusID = '" + status1 + "' " +
-                "AND p2.statusID = '" + status2 + "' " +
-                "AND p1.ageID IN " + ageIn.toString() + sexWhere + " " +
-                "GROUP BY p1.lgaCode";
-
-            String sub2016 = subquery.replace("%YEAR%", "2016");
-            String sub2021 = subquery.replace("%YEAR%", "2021");
-
             StringBuilder query = new StringBuilder();
-            query.append("SELECT y2021.lgaName AS lga, ");
+            if (byAgeGroups) {
+                query.append("SELECT y2021.lgaName AS lga, y2021.ageStart, y2021.ageEnd, ");
+            } else {
+                query.append("SELECT y2021.lgaName AS lga, ");
+            }
             query.append("y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
             query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
-            query.append("FROM (").append(sub2016).append(") y2016 ");
-            query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
-            query.append("ON y2016.lgaCode = y2021.lgaCode");
+            query.append("FROM (").append(select2016).append(") y2016 ");
+            query.append("RIGHT JOIN (").append(select2021).append(") y2021 ");
+            query.append(joinOn);
 
             ResultSet rs = statement.executeQuery(query.toString());
             while (rs.next()) {
@@ -633,7 +639,13 @@ public class JDBCConnection {
                 Integer status1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
                 Integer status2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
                 Integer gap_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
-                results.add(new PopulationGapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+                if (byAgeGroups) {
+                    Integer ageStart = rs.getObject("ageStart") != null ? rs.getInt("ageStart") : null;
+                    Integer ageEnd = rs.getObject("ageEnd") != null ? rs.getInt("ageEnd") : null;
+                    results.add(new PopulationGapResult(lga, ageStart, ageEnd, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+                } else {
+                    results.add(new PopulationGapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+                }
             }
             statement.close();
         } catch (SQLException e) {
