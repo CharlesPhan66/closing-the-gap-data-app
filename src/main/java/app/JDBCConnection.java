@@ -26,7 +26,116 @@ public class JDBCConnection {
     public JDBCConnection() {
         System.out.println("Created JDBC Connection Object");
     }
-// Inserted at the end of the JDBCConnection class
+    // Inserted at the end of the JDBCConnection class
+    /**
+     * Get Non-school Education gap results (view by total or by degree).
+     * @param status1 statusID for group 1
+     * @param status2 statusID for group 2
+     * @param sex sexID ("both", "f", "m")
+     * @param degreeIDs list of d_cID (degree codes)
+     * @param viewBy "total" or "degree"
+     * @return list of NonSchoolGapResult
+     */
+    public java.util.ArrayList<NonSchoolGapResult> getNonSchoolGapResults(String status1, String status2, String sex, java.util.List<String> degreeIDs, String viewBy) {
+        java.util.ArrayList<NonSchoolGapResult> results = new java.util.ArrayList<>();
+        java.sql.Connection connection = null;
+        try {
+            connection = java.sql.DriverManager.getConnection(DATABASE);
+            java.sql.Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+    
+            boolean bothSex = "both".equalsIgnoreCase(sex);
+            boolean singleDegree = (degreeIDs != null && degreeIDs.size() == 1);
+            boolean byDegree = "degree".equalsIgnoreCase(viewBy) && degreeIDs != null && degreeIDs.size() > 1;
+    
+            // Build IN clause for degreeIDs
+            StringBuilder degIn = new StringBuilder();
+            if (degreeIDs != null && !degreeIDs.isEmpty()) {
+                degIn.append("('");
+                degIn.append(String.join("','", degreeIDs));
+                degIn.append("')");
+            } else {
+                degIn.append("('')");
+            }
+    
+            String sexFilter = bothSex ? "" : (" AND n1.sexID = '" + sex + "'");
+            String sexJoin = " AND n1.sexID = n2.sexID ";
+            String degJoin = " AND n1.d_cID = n2.d_cID ";
+    
+            String selectAgg, groupBy, joinNonSchool, selectDegreeName;
+            if (byDegree) {
+                // View by degree (multi)
+                selectAgg = "SUM(n1.populationValue) AS status1Value, SUM(n2.populationValue) AS status2Value, SUM(n2.populationValue) - SUM(n1.populationValue) AS gap";
+                groupBy = "GROUP BY n1.lgaCode, LGA.lgaName, nonSchool.name";
+                joinNonSchool = "JOIN nonSchool ON n1.d_cID = nonSchool.d_cID ";
+                selectDegreeName = ", nonSchool.name ";
+            } else {
+                // View by total (single or multi)
+                selectAgg = bothSex ?
+                    "SUM(n1.populationValue) AS status1Value, SUM(n2.populationValue) AS status2Value, SUM(n2.populationValue) - SUM(n1.populationValue) AS gap"
+                    :
+                    "n1.populationValue AS status1Value, n2.populationValue AS status2Value, n2.populationValue - n1.populationValue AS gap";
+                groupBy = bothSex ? "GROUP BY n1.lgaCode, LGA.lgaName" : "GROUP BY n1.lgaCode";
+                joinNonSchool = "";
+                selectDegreeName = "";
+            }
+    
+            String subquery =
+                "SELECT n1.lgaCode, LGA.lgaName" + selectDegreeName + ", " + selectAgg + " " +
+                "FROM NonSchoolEdu n1 " +
+                "JOIN NonSchoolEdu n2 ON n1.lgaCode = n2.lgaCode AND n1.year = n2.year" + sexJoin + degJoin + " " +
+                "JOIN LGA ON n1.lgaCode = LGA.lgaCode AND n1.year = LGA.year " +
+                joinNonSchool +
+                "WHERE n1.year = %YEAR% " +
+                "AND n1.statusID = '" + status1 + "' " +
+                "AND n2.statusID = '" + status2 + "' " +
+                (singleDegree ? ("AND n1.d_cID = '" + degreeIDs.get(0) + "' ") : ("AND n1.d_cID IN " + degIn.toString() + " ")) +
+                sexFilter + " " +
+                groupBy;
+    
+            String sub2016 = subquery.replace("%YEAR%", "2016");
+            String sub2021 = subquery.replace("%YEAR%", "2021");
+    
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT y2021.lgaName AS lga");
+            if (byDegree) query.append(", y2021.name");
+            query.append(", y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
+            query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
+            query.append("FROM (").append(sub2016).append(") y2016 ");
+            query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
+            query.append("ON y2021.lgaCode = y2016.lgaCode");
+            if (byDegree) query.append(" AND y2021.name = y2016.name");
+
+            java.sql.ResultSet rs = statement.executeQuery(query.toString());
+            while (rs.next()) {
+                String lga = rs.getString("lga");
+                String degreeName = byDegree ? rs.getString("name") : null;
+                Integer status1_2016 = rs.getObject("status1_2016") != null ? rs.getInt("status1_2016") : null;
+                Integer status2_2016 = rs.getObject("status2_2016") != null ? rs.getInt("status2_2016") : null;
+                Integer gap_2016 = rs.getObject("gap_2016") != null ? rs.getInt("gap_2016") : null;
+                Integer status1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
+                Integer status2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
+                Integer gap_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
+                if (byDegree) {
+                    results.add(new NonSchoolGapResult(lga, degreeName, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+                } else {
+                    results.add(new NonSchoolGapResult(lga, status1_2016, status2_2016, gap_2016, status1_2021, status2_2021, gap_2021));
+                }
+            }
+            statement.close();
+        } catch (java.sql.SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (java.sql.SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return results;
+    }
+
+
     /**
      * Get health gap results for a single health condition, parameterized for user-chosen filters.
      * @param status1 statusID for group 1
@@ -43,28 +152,29 @@ public class JDBCConnection {
             Statement statement = connection.createStatement();
             statement.setQueryTimeout(30);
 
-            // Build sex filter for SQL
-            String sexJoin = "";
-            String sexWhere = "";
-            if (!"both".equalsIgnoreCase(sex)) {
-                sexJoin = " AND h1.sexID = h2.sexID ";
-                sexWhere = " AND h1.sexID = '" + sex + "' ";
-            }
+            boolean bothSex = "both".equalsIgnoreCase(sex);
+            String sexFilter = bothSex ? "" : (" AND h1.sexID = '" + sex + "'");
+            String sexJoin = " AND h1.sexID = h2.sexID ";
+            String condJoin = " AND h1.conditionID = h2.conditionID ";
+
+            String selectAgg = bothSex ?
+                "SUM(h1.populationValue) AS status1Value, SUM(h2.populationValue) AS status2Value, SUM(h2.populationValue) - SUM(h1.populationValue) AS gap"
+                :
+                "h1.populationValue AS status1Value, h2.populationValue AS status2Value, h2.populationValue - h1.populationValue AS gap";
+
+            String groupBy = bothSex ? "GROUP BY h1.lgaCode, LGA.lgaName" : "GROUP BY h1.lgaCode";
 
             String subquery =
-                "SELECT h1.lgaCode, LGA.lgaName, " +
-                "SUM(h1.populationValue) AS status1Value, " +
-                "SUM(h2.populationValue) AS status2Value, " +
-                "SUM(h2.populationValue) - SUM(h1.populationValue) AS gap " +
+                "SELECT h1.lgaCode, LGA.lgaName, " + selectAgg + " " +
                 "FROM Health h1 " +
-                "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + " " +
-                "JOIN LGA ON h1.lgaCode = LGA.lgaCode " +
+                "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + condJoin + " " +
+                "JOIN LGA ON h1.lgaCode = LGA.lgaCode AND h1.year = LGA.year " +
                 "WHERE h1.year = %YEAR% " +
                 "AND h1.statusID = '" + status1 + "' " +
                 "AND h2.statusID = '" + status2 + "' " +
-                sexWhere +
-                " AND h1.conditionID = '" + conditionID + "' " +
-                "GROUP BY h1.lgaCode";
+                "AND h1.conditionID = '" + conditionID + "' " +
+                sexFilter + " " +
+                groupBy;
 
             String sub2016 = subquery.replace("%YEAR%", "2016");
             String sub2021 = subquery.replace("%YEAR%", "2021");
@@ -75,7 +185,7 @@ public class JDBCConnection {
             query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
             query.append("FROM (").append(sub2016).append(") y2016 ");
             query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
-            query.append("ON y2016.lgaCode = y2021.lgaCode");
+            query.append("ON y2021.lgaCode = y2016.lgaCode");
 
             ResultSet rs = statement.executeQuery(query.toString());
             while (rs.next()) {
@@ -128,10 +238,9 @@ public class JDBCConnection {
             }
 
             // Build sex filter for SQL
-            String sexJoin = "";
+            String sexJoin = " AND h1.sexID = h2.sexID ";
             String sexWhere = "";
             if (!"both".equalsIgnoreCase(sex)) {
-                sexJoin = " AND h1.sexID = h2.sexID ";
                 sexWhere = " AND h1.sexID = '" + sex + "' ";
             }
 
@@ -213,28 +322,28 @@ public class JDBCConnection {
                 condIn.append("('')");
             }
 
-            // Build sex filter for SQL
-            String sexJoin = "";
-            String sexWhere = "";
-            if (!"both".equalsIgnoreCase(sex)) {
-                sexJoin = " AND h1.sexID = h2.sexID ";
-                sexWhere = " AND h1.sexID = '" + sex + "' ";
-            }
+
+            boolean bothSex = "both".equalsIgnoreCase(sex);
+            String sexFilter = bothSex ? "" : (" AND h1.sexID = '" + sex + "'");
+            String sexJoin = " AND h1.sexID = h2.sexID ";
+            String condJoin = " AND h1.conditionID = h2.conditionID ";
+
+            String selectAgg =
+                "SUM(h1.populationValue) AS status1Value, SUM(h2.populationValue) AS status2Value, SUM(h2.populationValue) - SUM(h1.populationValue) AS gap";
+
+            String groupBy = "GROUP BY h1.lgaCode, LGA.lgaName";
 
             String subquery =
-                "SELECT h1.lgaCode, LGA.lgaName, " +
-                "SUM(h1.populationValue) AS status1Value, " +
-                "SUM(h2.populationValue) AS status2Value, " +
-                "SUM(h2.populationValue) - SUM(h1.populationValue) AS gap " +
+                "SELECT h1.lgaCode, LGA.lgaName, " + selectAgg + " " +
                 "FROM Health h1 " +
-                "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + " " +
-                "JOIN LGA ON h1.lgaCode = LGA.lgaCode " +
+                "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + condJoin + " " +
+                "JOIN LGA ON h1.lgaCode = LGA.lgaCode AND h1.year = LGA.year " +
                 "WHERE h1.year = %YEAR% " +
                 "AND h1.statusID = '" + status1 + "' " +
                 "AND h2.statusID = '" + status2 + "' " +
-                sexWhere +
-                " AND h1.conditionID IN " + condIn.toString() + " " +
-                "GROUP BY h1.lgaCode";
+                "AND h1.conditionID IN " + condIn.toString() + " " +
+                sexFilter + " " +
+                groupBy;
 
             String sub2016 = subquery.replace("%YEAR%", "2016");
             String sub2021 = subquery.replace("%YEAR%", "2021");
@@ -245,7 +354,7 @@ public class JDBCConnection {
             query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
             query.append("FROM (").append(sub2016).append(") y2016 ");
             query.append("RIGHT JOIN (").append(sub2021).append(") y2021 ");
-            query.append("ON y2016.lgaCode = y2021.lgaCode");
+            query.append("ON y2021.lgaCode = y2016.lgaCode");
 
             ResultSet rs = statement.executeQuery(query.toString());
             while (rs.next()) {
@@ -267,6 +376,138 @@ public class JDBCConnection {
             } catch (SQLException e) {
                 System.err.println(e.getMessage());
             }
+        }
+        return results;
+    }
+
+    /**
+     * Get education gap aggregated across selected levelIDs (view by total).
+     * @param status1
+     * @param status2
+     * @param sex "both", "m", or "f"
+     * @param levelIDs list of levelIDs to include in IN(...)
+     * @return list of PopulationGapResult
+     */
+    public ArrayList<PopulationGapResult> getEducationGapTotal(String status1, String status2, String sex, java.util.List<String> levelIDs) {
+        ArrayList<PopulationGapResult> results = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            // Build IN clause
+            StringBuilder in = new StringBuilder();
+            if (levelIDs != null && !levelIDs.isEmpty()) {
+                in.append("('");
+                in.append(String.join("','", levelIDs));
+                in.append("')");
+            } else {
+                in.append("('')");
+            }
+
+            String sexJoin = " AND e1.sexID = e2.sexID ";
+            String sexWhere = "";
+            if (!"both".equalsIgnoreCase(sex)) {
+                sexWhere = " AND e1.sexID = '" + sex + "' ";
+            }
+
+            String subquery =
+                "SELECT e1.lgaCode, LGA.lgaName, SUM(e1.populationValue) AS status1Value, SUM(e2.populationValue) AS status2Value, SUM(e2.populationValue)-SUM(e1.populationValue) AS gap " +
+                "FROM Education e1 JOIN Education e2 ON e1.lgaCode = e2.lgaCode AND e1.year = e2.year AND e1.levelID = e2.levelID" + sexJoin + " " +
+                "JOIN LGA ON LGA.lgaCode = e1.lgaCode AND LGA.year = e1.year " +
+                "WHERE e1.year = %YEAR% AND e1.statusID = '" + status1 + "' AND e2.statusID = '" + status2 + "' " + sexWhere +
+                " AND e1.levelID IN " + in.toString() + " GROUP BY e1.lgaCode, LGA.lgaName";
+
+            String q2016 = subquery.replace("%YEAR%", "2016");
+            String q2021 = subquery.replace("%YEAR%", "2021");
+
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT y2021.lgaName AS lga, ");
+            query.append("y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
+            query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
+            query.append("FROM (" + q2016 + ") y2016 RIGHT JOIN (" + q2021 + ") y2021 ON y2016.lgaCode = y2021.lgaCode");
+
+            ResultSet rs = statement.executeQuery(query.toString());
+            while (rs.next()) {
+                String lga = rs.getString("lga");
+                Integer s1_2016 = rs.getObject("status1_2016") != null ? rs.getInt("status1_2016") : null;
+                Integer s2_2016 = rs.getObject("status2_2016") != null ? rs.getInt("status2_2016") : null;
+                Integer g_2016 = rs.getObject("gap_2016") != null ? rs.getInt("gap_2016") : null;
+                Integer s1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
+                Integer s2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
+                Integer g_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
+                results.add(new PopulationGapResult(lga, s1_2016, s2_2016, g_2016, s1_2021, s2_2021, g_2021));
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try { if (connection != null) connection.close(); } catch (SQLException e) { System.err.println(e.getMessage()); }
+        }
+        return results;
+    }
+
+    /**
+     * Get education gap broken down by level (view by levels). Returns EducationGapResult with level text.
+     */
+    public ArrayList<EducationGapResult> getEducationGapByLevel(String status1, String status2, String sex, java.util.List<String> levelIDs) {
+        ArrayList<EducationGapResult> results = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(DATABASE);
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+
+            StringBuilder in = new StringBuilder();
+            if (levelIDs != null && !levelIDs.isEmpty()) {
+                in.append("('");
+                in.append(String.join("','", levelIDs));
+                in.append("')");
+            } else {
+                in.append("('')");
+            }
+
+            String sexJoin = " AND e1.sexID = e2.sexID ";
+            String sexWhere = "";
+            if (!"both".equalsIgnoreCase(sex)) {
+                sexWhere = " AND e1.sexID = '" + sex + "' ";
+            }
+
+            String subquery =
+                "SELECT e1.lgaCode, LGA.lgaName, Edu.level, e1.levelID, SUM(e1.populationValue) AS status1Value, SUM(e2.populationValue) AS status2Value, SUM(e2.populationValue)-SUM(e1.populationValue) AS gap " +
+                "FROM Education e1 JOIN Education e2 ON e1.lgaCode = e2.lgaCode AND e1.year = e2.year AND e1.levelID = e2.levelID" + sexJoin + " " +
+                "JOIN LGA ON LGA.lgaCode = e1.lgaCode AND LGA.year = e1.year " +
+                "JOIN Edu ON Edu.levelID = e1.levelID " +
+                "WHERE e1.year = %YEAR% AND e1.statusID = '" + status1 + "' AND e2.statusID = '" + status2 + "' " + sexWhere +
+                " AND e1.levelID IN " + in.toString() + " GROUP BY e1.lgaCode, e1.levelID, LGA.lgaName, Edu.level";
+
+            String q2016 = subquery.replace("%YEAR%", "2016");
+            String q2021 = subquery.replace("%YEAR%", "2021");
+
+            StringBuilder query = new StringBuilder();
+            query.append("SELECT y2021.lgaName AS lga, y2021.level AS level, y2016.levelID AS levelID, ");
+            query.append("y2016.status1Value AS status1_2016, y2016.status2Value AS status2_2016, y2016.gap AS gap_2016, ");
+            query.append("y2021.status1Value AS status1_2021, y2021.status2Value AS status2_2021, y2021.gap AS gap_2021 ");
+            query.append("FROM (" + q2016 + ") y2016 RIGHT JOIN (" + q2021 + ") y2021 ON y2016.lgaCode = y2021.lgaCode AND y2016.levelID = y2021.levelID");
+
+            ResultSet rs = statement.executeQuery(query.toString());
+            while (rs.next()) {
+                String lga = rs.getString("lga");
+                String level = rs.getString("level");
+                Integer s1_2016 = rs.getObject("status1_2016") != null ? rs.getInt("status1_2016") : null;
+                Integer s2_2016 = rs.getObject("status2_2016") != null ? rs.getInt("status2_2016") : null;
+                Integer g_2016 = rs.getObject("gap_2016") != null ? rs.getInt("gap_2016") : null;
+                Integer s1_2021 = rs.getObject("status1_2021") != null ? rs.getInt("status1_2021") : null;
+                Integer s2_2021 = rs.getObject("status2_2021") != null ? rs.getInt("status2_2021") : null;
+                Integer g_2021 = rs.getObject("gap_2021") != null ? rs.getInt("gap_2021") : null;
+                results.add(new EducationGapResult(lga, level, s1_2016, s2_2016, g_2016, s1_2021, s2_2021, g_2021));
+            }
+            statement.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try { if (connection != null) connection.close(); } catch (SQLException e) { System.err.println(e.getMessage()); }
         }
         return results;
     }
