@@ -244,6 +244,9 @@ public class JDBCConnection {
                 sexWhere = " AND h1.sexID = '" + sex + "' ";
             }
 
+            // FIX: Define the 'groupBy' variable that was missing.
+            String groupBy = "GROUP BY h1.lgaCode, LGA.lgaName, healthCondition.diseaseName";
+
             String subquery =
                 "SELECT h1.lgaCode, LGA.lgaName, healthCondition.diseaseName, " +
                 "SUM(h1.populationValue) AS status1Value, " +
@@ -251,14 +254,14 @@ public class JDBCConnection {
                 "SUM(h2.populationValue) - SUM(h1.populationValue) AS gap " +
                 "FROM Health h1 " +
                 "JOIN Health h2 ON h1.lgaCode = h2.lgaCode AND h1.year = h2.year" + sexJoin + " " +
-                "JOIN LGA ON h1.lgaCode = LGA.lgaCode " +
+                "JOIN LGA ON h1.lgaCode = LGA.lgaCode AND h1.year = LGA.year " +
                 "JOIN healthCondition ON h1.conditionID = healthCondition.conditionID " +
                 "WHERE h1.year = %YEAR% " +
                 "AND h1.statusID = '" + status1 + "' " +
                 "AND h2.statusID = '" + status2 + "' " +
-                sexWhere +
-                " AND h1.conditionID IN " + condIn.toString() + " " +
-                "GROUP BY h1.lgaCode, healthCondition.diseaseName";
+                "AND h1.conditionID IN " + condIn.toString() + " " +
+                sexWhere + " " +
+                groupBy;
 
             String sub2016 = subquery.replace("%YEAR%", "2016");
             String sub2021 = subquery.replace("%YEAR%", "2021");
@@ -443,7 +446,11 @@ public class JDBCConnection {
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         } finally {
-            try { if (connection != null) connection.close(); } catch (SQLException e) { System.err.println(e.getMessage()); }
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
         return results;
     }
@@ -507,7 +514,11 @@ public class JDBCConnection {
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         } finally {
-            try { if (connection != null) connection.close(); } catch (SQLException e) { System.err.println(e.getMessage()); }
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
         return results;
     }
@@ -1454,6 +1465,7 @@ public class JDBCConnection {
     }
 
     /**
+    
      * Get all sex values from the Sex table.
      * @return ArrayList of String representing sex ("Female", "Male")
      */
@@ -1798,12 +1810,13 @@ public class JDBCConnection {
     }
 
     /**
-     * Finds LGAs with the most similar population counts based on user-selected criteria.
+     * Gets the calculated population data for a single, specific LGA based on filters.
+     * This is used to populate the "Chosen LGA" table.
      */
-    public ArrayList<SimilarityResult> findSimilarLGAs(String selectedLgaCode, int year, String outcome, String statusID, int ageMin, int ageMax, String categoryID, int numLgas) {
-        ArrayList<SimilarityResult> similarLgas = new ArrayList<>();
+    public SimilarityResult getTargetLGAData(String selectedLgaCode, int year, String outcome, String statusID, int ageMin, int ageMax, String categoryID) {
         String tableName = "";
         String categoryColumn = "";
+        boolean hasAgeFilter = (ageMin > 0 || ageMax < 100);
 
         switch (outcome) {
             case "health": tableName = "Health"; categoryColumn = "conditionID"; break;
@@ -1812,25 +1825,103 @@ public class JDBCConnection {
             default: tableName = "Population"; categoryColumn = "sexID"; break;
         }
 
-        // FIX: Changed table name from 'Age' to 'ageGroup' to match the database schema.
+        String ageJoin = hasAgeFilter ? "JOIN ageGroup A ON T.ageID = A.ageID " : "";
+        
+        StringBuilder conditions = new StringBuilder();
+        if (statusID != null && !statusID.equals("none")) {
+            conditions.append(" AND T.statusID = '").append(statusID).append("'");
+        }
+        if (categoryID != null && !categoryID.equals("none") && !outcome.equals("population")) {
+            conditions.append(" AND T.").append(categoryColumn).append(" = '").append(categoryID).append("'");
+        }
+        if (hasAgeFilter) {
+            conditions.append(" AND A.ageStart >= ").append(ageMin).append(" AND A.ageEnd <= ").append(ageMax);
+        }
+
+        String queryTemplate = """
+            SELECT L.lgaName, SUM(T.populationValue) as value
+            FROM %s T
+            JOIN LGA L ON T.lgaCode = L.lgaCode AND T.year = L.year
+            %s
+            WHERE T.lgaCode = ? AND T.year = ? %s
+            GROUP BY L.lgaName
+        """;
+
+        String finalQuery = String.format(queryTemplate, tableName, ageJoin, conditions.toString());
+
+        try (Connection connection = DriverManager.getConnection(DATABASE);
+             PreparedStatement statement = connection.prepareStatement(finalQuery)) {
+            
+            statement.setString(1, selectedLgaCode);
+            statement.setInt(2, year);
+
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                return new SimilarityResult(
+                    selectedLgaCode,
+                    rs.getString("lgaName"),
+                    rs.getInt("value"),
+                    0 // The difference from itself is always 0
+                );
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getTargetLGAData: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null; // Return null if no data is found
+    }
+
+
+    /**
+     * Finds LGAs with the most similar population counts based on user-selected criteria.
+     */
+    public ArrayList<SimilarityResult> findSimilarLGAs(String selectedLgaCode, int year, String outcome, String statusID, int ageMin, int ageMax, String categoryID, int numLgas, String sortOrder) {
+        ArrayList<SimilarityResult> similarLgas = new ArrayList<>();
+        String tableName = "";
+        String categoryColumn = "";
+        boolean hasAgeFilter = (ageMin > 0 || ageMax < 100);
+
+        // Determine sort direction, defaulting to ASC (most similar first)
+        String sortDirection = "ASC";
+        if ("least_to_most".equals(sortOrder)) {
+            sortDirection = "DESC";
+        }
+
+        switch (outcome) {
+            case "health": tableName = "Health"; categoryColumn = "conditionID"; break;
+            case "education": tableName = "Education"; categoryColumn = "levelID"; break;
+            case "nonSchool": tableName = "NonSchoolEdu"; categoryColumn = "d_cID"; break;
+            default: tableName = "Population"; categoryColumn = "sexID"; break;
+        }
+
+        String ageJoin = "";
+        String ageWhere = "";
+        if (hasAgeFilter) {
+            ageJoin = "JOIN ageGroup A ON T.ageID = A.ageID ";
+            ageWhere = "AND A.ageStart >= " + ageMin + " AND A.ageEnd <= " + ageMax + " ";
+        }
+
+        // The ORDER BY clause now uses a placeholder for the sort direction.
         String queryTemplate = """
             WITH TargetValue AS (
                 SELECT SUM(T.populationValue) as value
                 FROM %s T
-                JOIN ageGroup A ON T.ageID = A.ageID
+                %s
                 WHERE T.lgaCode = ? AND T.year = ? %s
             ),
             AllLgaValues AS (
                 SELECT L.lgaCode, L.lgaName, SUM(T.populationValue) as value
                 FROM %s T
                 JOIN LGA L ON T.lgaCode = L.lgaCode AND T.year = L.year
-                JOIN ageGroup A ON T.ageID = A.ageID
-                WHERE T.year = ? %s
+                %s
+                WHERE T.year = ? AND L.lgaCode != ? %s
                 GROUP BY L.lgaCode, L.lgaName
             )
-            SELECT V.lgaCode, V.lgaName, IFNULL(V.value, 0) as population, ABS(IFNULL(V.value, 0) - IFNULL((SELECT value FROM TargetValue), 0)) as similarity_diff
+            SELECT V.lgaCode, V.lgaName, IFNULL(V.value, 0) as population,
+                   (IFNULL(V.value, 0) - IFNULL((SELECT value FROM TargetValue), 0)) as raw_diff,
+                   ABS(IFNULL(V.value, 0) - IFNULL((SELECT value FROM TargetValue), 0)) as similarity_diff
             FROM AllLgaValues V
-            ORDER BY similarity_diff ASC
+            ORDER BY similarity_diff %s
             LIMIT ?
         """;
 
@@ -1838,14 +1929,17 @@ public class JDBCConnection {
         if (statusID != null && !statusID.equals("none")) {
             conditions.append(" AND T.statusID = '").append(statusID).append("'");
         }
-        if (ageMin >= 0 && ageMax > ageMin) {
-            conditions.append(" AND A.ageStart >= ").append(ageMin).append(" AND A.ageEnd <= ").append(ageMax);
-        }
         if (categoryID != null && !categoryID.equals("none") && !outcome.equals("population")) {
             conditions.append(" AND T.").append(categoryColumn).append(" = '").append(categoryID).append("'");
         }
+        conditions.append(ageWhere);
 
-        String finalQuery = String.format(queryTemplate, tableName, conditions.toString(), tableName, conditions.toString());
+        // Add the sortDirection variable to the String.format arguments.
+        String finalQuery = String.format(queryTemplate,
+            tableName, ageJoin, conditions.toString(),
+            tableName, ageJoin, conditions.toString(),
+            sortDirection
+        );
 
         try (Connection connection = DriverManager.getConnection(DATABASE);
              PreparedStatement statement = connection.prepareStatement(finalQuery)) {
@@ -1853,7 +1947,8 @@ public class JDBCConnection {
             statement.setString(1, selectedLgaCode);
             statement.setInt(2, year);
             statement.setInt(3, year);
-            statement.setInt(4, numLgas);
+            statement.setString(4, selectedLgaCode); // New parameter to exclude the chosen LGA
+            statement.setInt(5, numLgas);
 
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
@@ -1861,7 +1956,7 @@ public class JDBCConnection {
                     rs.getString("lgaCode"),
                     rs.getString("lgaName"),
                     rs.getInt("population"),
-                    rs.getInt("similarity_diff")
+                    rs.getInt("raw_diff")
                 ));
             }
         } catch (SQLException e) {

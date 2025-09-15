@@ -4,17 +4,19 @@ public class SimilarityResult {
     private String lgaCode;
     private String lgaName;
     private int population;
-    private int similarityDiff;
+    // FIX: This field will now store the raw difference (+/-)
+    private int rawDiff;
 
-    public SimilarityResult(String lgaCode, String lgaName, int population, int similarityDiff) {
+    public SimilarityResult(String lgaCode, String lgaName, int population, int rawDiff) {
         this.lgaCode = lgaCode;
         this.lgaName = lgaName;
         this.population = population;
-        this.similarityDiff = similarityDiff;
+        this.rawDiff = rawDiff;
     }
 
     public String getLgaCode() { return lgaCode; }
     public String getLgaName() { return lgaName; }
     public int getPopulation() { return population; }
-    public int getSimilarityDiff() { return similarityDiff; }
+    // FIX: Renamed getter for clarity
+    public int getRawDiff() { return rawDiff; }
 }

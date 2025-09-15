@@ -81,38 +81,108 @@
 
                 <label>Age Range:</label>
                 <div>
-                    <input type="number" name="ageMin" placeholder="Min Age" min="0" th:value="${selectedAgeMin}">
+                    <input type="number" id="ageMin" name="ageMin" placeholder="Min Age" min="0" th:value="${selectedAgeMin}">
                     -
-                    <input type="number" name="ageMax" placeholder="Max Age" min="0" th:value="${selectedAgeMax}">
+                    <input type="number" id="ageMax" name="ageMax" placeholder="Max Age" min="0" th:value="${selectedAgeMax}">
+                    <span id="age-filter-warning" class="hidden" style="color: rgb(26, 26, 26); font-size: 0.8em; margin-left: 10px;"><em>The current dataset does not support Age Filter</em></span>
                 </div>
 
                 <label for="numLgas">Number of similar LGAs to find:</label>
                 <input type="number" id="numLgas" name="numLgas" min="1" max="20" th:value="${selectedNumLgas != null ? selectedNumLgas : '5'}">
+
+                <label for="sortOrder">Sort by:</label>
+                <select id="sortOrder" name="sortOrder">
+                    <option value="most_to_least" th:selected="${selectedSortOrder == 'most_to_least' or selectedSortOrder == null}">Most Similar to Least Similar</option>
+                    <option value="least_to_most" th:selected="${selectedSortOrder == 'least_to_most'}">Least Similar to Most Similar</option>
+                </select>
             </div>
             <button type="submit">Find Similar LGAs</button>
         </form>
 
-        <div th:if="${results != null}">
-            <h2 th:if="${!results.isEmpty()}">Similarity Results</h2>
+        <!-- Results Section -->
+        <div th:if="${results != null and !results.isEmpty()}">
+            
+            <!-- Filter Summary Section -->
+            <div th:if="${targetLgaResult != null}" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+                <h3>Current Filters</h3>
+                <p>
+                    <strong>Year:</strong> <span th:text="${selectedYear}"></span><br/>
+                    <strong>Outcome:</strong> 
+                    <span th:switch="${selectedOutcome}">
+                        <span th:case="'population'">Population</span>
+                        <span th:case="'health'">Health Conditions</span>
+                        <span th:case="'education'">School Completion</span>
+                        <span th:case="'nonSchool'">Non-school Completion</span>
+                    </span><br/>
+
+                    <!-- Display selected category name -->
+                    <th:block th:if="${selectedCategory != null and selectedCategory != 'none'}">
+                        <strong>Category:</strong>
+                        <span th:switch="${selectedOutcome}">
+                            <span th:case="'health'" th:each="c : ${healthConditions}" th:if="${c.conditionID == selectedCategory}" th:text="${c.description}"></span>
+                            <span th:case="'education'" th:each="s : ${schoolLevels}" th:if="${s.levelID == selectedCategory}" th:text="${s.level}"></span>
+                            <span th:case="'nonSchool'" th:each="d : ${nonSchoolDegrees}" th:if="${d.dCID == selectedCategory}" th:text="${d.name}"></span>
+                        </span><br/>
+                    </th:block>
+
+                    <strong>Indigenous Status:</strong>
+                    <span th:if="${selectedStatus == 'none' or selectedStatus == null}">Both</span>
+                    <span th:each="s : ${statusList}" th:if="${s.statusID == selectedStatus}" th:text="${s.statusName}"></span><br/>
+
+                    <!-- Display age range if it's not the default -->
+                    <th:block th:if="${(selectedAgeMin != null and selectedAgeMin != '0') or (selectedAgeMax != null and selectedAgeMax != '100')}">
+                        <strong>Age Range:</strong>
+                        <span th:text="${selectedAgeMin != null ? selectedAgeMin : '0'}"></span> - 
+                        <span th:text="${selectedAgeMax != null ? selectedAgeMax : '100'}"></span>
+                    </th:block>
+                </p>
+            </div>
+
             <p th:if="${results.isEmpty()}">No similar LGAs found for the selected criteria.</p>
-            <table th:if="${!results.isEmpty()}" border="1">
-                <thead>
-                    <tr>
-                        <th>Similarity Ranking</th>
-                        <th>LGA Name</th>
-                        <th>Population Count</th>
-                        <th>Difference from Target</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="r, iterStat : ${results}" th:class="${r.lgaCode == selectedLga} ? 'highlight' : ''">
-                        <td th:text="${iterStat.count}"></td>
-                        <td th:text="${r.lgaName}"></td>
-                        <td th:text="${r.population}"></td>
-                        <td th:text="${r.similarityDiff}"></td>
-                    </tr>
-                </tbody>
-            </table>
+
+            <!-- First Table: Chosen LGA -->
+            <div th:if="${targetLgaResult != null}">
+                <h2>Chosen LGA</h2>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Chosen LGA</th>
+                            <!-- FIX: Changed table header text -->
+                            <th>Total LGA population</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td th:text="${targetLgaResult.lgaName}"></td>
+                            <td th:text="${targetLgaResult.population}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Second Table: Similarity Table -->
+            <div th:if="${similarLgas != null and !similarLgas.isEmpty()}">
+                <h2>Similarity Comparison</h2>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Similarity Ranking</th>
+                            <th>LGA Name</th>
+                            <th>Total LGA Population</th>
+                            <th>Number difference from Chosen LGA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r, iterStat : ${similarLgas}">
+                            <td th:text="${iterStat.count}"></td>
+                            <td th:text="${r.lgaName}"></td>
+                            <td th:text="${r.population}"></td>
+                            <!-- FIX: Display rawDiff and add a '+' for positive numbers -->
+                            <td th:text="${r.rawDiff >= 0 ? '+' : ''} + ${r.rawDiff}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -123,6 +193,12 @@
             const eduDiv = document.getElementById('education-category');
             const nonSchoolDiv = document.getElementById('nonSchool-category');
 
+            // Get references to age filter elements
+            const ageMinInput = document.getElementById('ageMin');
+            const ageMaxInput = document.getElementById('ageMax');
+            const ageWarning = document.getElementById('age-filter-warning');
+
+            // --- Category Toggling Logic (existing) ---
             healthDiv.classList.add('hidden');
             eduDiv.classList.add('hidden');
             nonSchoolDiv.classList.add('hidden');
@@ -140,6 +216,19 @@
             } else if (outcome === 'nonSchool') {
                 nonSchoolDiv.classList.remove('hidden');
                 nonSchoolDiv.querySelector('select').disabled = false;
+            }
+
+            // --- New Age Filter Logic ---
+            if (outcome === 'health' || outcome === 'education' || outcome === 'nonSchool') {
+                // Disable age inputs and show warning
+                ageMinInput.disabled = true;
+                ageMaxInput.disabled = true;
+                ageWarning.classList.remove('hidden');
+            } else {
+                // Enable age inputs and hide warning for 'population' dataset
+                ageMinInput.disabled = false;
+                ageMaxInput.disabled = false;
+                ageWarning.classList.add('hidden');
             }
         }
         window.onload = toggleCategory;

@@ -30,6 +30,7 @@ public class PageST3B implements Handler {
         String ageMaxStr = context.formParam("ageMax");
         String category = context.formParam("category");
         String numLgasStr = context.formParam("numLgas");
+        String sortOrder = context.formParam("sortOrder");
 
         if ("POST".equals(context.method())) {
             try {
@@ -38,8 +39,24 @@ public class PageST3B implements Handler {
                 int ageMax = (ageMaxStr != null && !ageMaxStr.isEmpty()) ? Integer.parseInt(ageMaxStr) : 100;
                 int numLgas = (numLgasStr != null && !numLgasStr.isEmpty()) ? Integer.parseInt(numLgasStr) : 5;
 
-                ArrayList<SimilarityResult> results = jdbc.findSimilarLGAs(selectedLga, yearInt, outcome, status, ageMin, ageMax, category, numLgas);
-                model.put("results", results);
+                // FIX: Get the chosen LGA's data separately.
+                SimilarityResult targetLgaResult = jdbc.getTargetLGAData(selectedLga, yearInt, outcome, status, ageMin, ageMax, category);
+
+                // FIX: Get the list of *other* similar LGAs. The number of LGAs is now correct.
+                ArrayList<SimilarityResult> similarLgas = jdbc.findSimilarLGAs(selectedLga, yearInt, outcome, status, ageMin, ageMax, category, numLgas, sortOrder);
+
+                // Add the separated results to the model
+                model.put("targetLgaResult", targetLgaResult);
+                model.put("similarLgas", similarLgas);
+                
+                // We create a dummy 'results' list so the 'Filters Applied' section still appears.
+                // It's not used for table data anymore.
+                if (targetLgaResult != null) {
+                    ArrayList<SimilarityResult> results = new ArrayList<>();
+                    results.add(targetLgaResult);
+                    model.put("results", results);
+                }
+
 
             } catch (NumberFormatException e) {
                 model.put("error", "Invalid number format provided.");
@@ -54,6 +71,7 @@ public class PageST3B implements Handler {
         model.put("selectedAgeMax", ageMaxStr);
         model.put("selectedCategory", category);
         model.put("selectedNumLgas", numLgasStr);
+        model.put("selectedSortOrder", sortOrder);
 
         context.render(TEMPLATE, model);
     }
