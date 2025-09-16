@@ -1,17 +1,11 @@
 package app;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.HashMap;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 public class PageMission implements Handler {
 
@@ -21,11 +15,23 @@ public class PageMission implements Handler {
 
     @Override
     public void handle(Context context) throws Exception {
+        // Create a simple HTML webpage in a String
+        // This example uses JDBC to lookup the LGAs
+        JDBCConnection jdbc = new JDBCConnection();
+
+        // Next we will ask this *class* for the LGAs
+        ArrayList<Members> members = jdbc.getMembers();
         Map<String, Object> model = new HashMap<>();
+        model.put("members", members);
+
+        ArrayList<Persona> persona = jdbc.getPersona();
+        model.put("persona", persona);
+
+        ArrayList<Priorities> priorities = jdbc.getPriorities();
+        model.put("priorities", priorities);
 
         // DO NOT MODIFY THIS
         // Makes Javalin render the webpage
         context.render(TEMPLATE, model);
     }
-
 }

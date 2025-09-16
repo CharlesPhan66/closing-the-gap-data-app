@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School and Non-School completion by LGA or State in 2021</title>
+    <link rel='stylesheet' type='text/css' href='common.css' />
+</head>
+<body>
+    <div class='topnav'>
+        <a href='/'>Homepage</a>
+        <a href='mission.html'>Our Mission</a>
+        <a href='page2A.html'>Age and Health Conditions</a>
+        <a href='page2B.html'>School and Non-School Completion</a>
+        <a href='page3A.html'>Status Gap</a>
+        <a href='page3B.html'>LGA Similarity</a>
+    </div>
+    <div class='header'>
+        <h1>Subtask 2.B</h1>
+    </div>
+    <div class='content'>
+        <form id="filterForm" method="POST" action="/page2B.html">
+            <!-- Mode Selector -->
+            <div>
+                <label>View Mode:</label>
+                <input type="radio" id="detailed" name="viewMode" value="detailed" th:checked="${viewMode == 'detailed' or viewMode == null}">
+                <label for="detailed">Detailed</label>
+                <input type="radio" id="summary" name="viewMode" value="summary" th:checked="${viewMode == 'summary'}">
+                <label for="summary">Summary</label>
+            </div>
+            <hr>
+
+            <!-- State Dropdown (auto-submits) -->
+            <label for="targetState">State*:</label>
+            <select name="targetState" id="targetState" onchange="this.form.submit()">
+                <option value="none" th:selected="${selectedState == null or selectedState == 'none'}">-- Select State --</option>
+                <th:block th:each="state : ${states}">
+                    <option th:value="${state.code}"
+                            th:text="${state.name}"
+                            th:selected="${state.code == selectedState}"></option>
+                </th:block>
+            </select>
+
+            <!-- Year Dropdown (auto-submits) -->
+            <label for="targetYear">Year*:</label>
+            <select name="targetYear" id="targetYear" onchange="this.form.submit()">
+                <option value="none" th:selected="${selectedYear == null or selectedYear == 'none'}">-- Select Year --</option>
+                <option value="2021" th:selected="${selectedYear == '2021'}">2021</option>
+            </select>
+            
+            <!-- Other filters are enabled once State and Year are chosen -->
+            <label for="targetLGA">LGA:</label>
+            <select name="targetLGA" id="targetLGA" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">
+                <option value="none" th:selected="${selectedLGA == null or selectedLGA == 'none'}">-- All LGAs --</option>
+                <th:block th:each="lga : ${lgasInState}">
+                    <option th:value="${lga.code}"
+                            th:text="${lga.name}"
+                            th:selected="${lga.code == selectedLGA}"></option>
+                </th:block>
+            </select>
+            </br>
+            
+            <label for="targetStatus">Indigenous Status:</label>
+            <select name="targetStatus" id="targetStatus" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">
+                <option value="none" th:selected="${selectedStatus == null or selectedStatus == 'none'}">-- Select Status --</option>
+                <th:block th:each="status : ${statusList}">
+                    <option th:value="${status.statusID}"
+                            th:text="${status.statusName}"
+                            th:selected="${status.statusID == selectedStatus}"></option>
+                </th:block>
+            </select>
+
+            <label for="targetAge">Age Group:</label>
+            <select name="targetAge" id="targetAge" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">
+                <option value="none" th:selected="${selectedAge == null or selectedAge == 'none'}">-- Select Age --</option>
+                <th:block th:each="age : ${ages}">
+                    <option th:value="${age.ageID}"
+                            th:text="${age.ageStart == 65} ? ${age.ageStart} + ' and over' : ${age.ageStart} + ' - ' + ${age.ageEnd}"
+                            th:selected="${selectedAge != null and selectedAge != 'none' and age.ageID == selectedAge}"></option>
+                </th:block>
+            </select>
+
+            <label for="targetGender">Gender:</label>
+            <select name="targetGender" id="targetGender" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">
+                <option value="none" th:selected="${selectedGender == null or selectedGender == 'none'}">-- Select Gender --</option>
+                <th:block th:each="gender : ${genders}">
+                    <option th:value="${gender.sexID}"
+                            th:text="${gender.sex}"
+                            th:selected="${gender.sexID == selectedGender}"></option>
+                </th:block>
+            </select>
+            </br>
+
+            <label for="targetEduType">Education Type:</label>
+            <select name="targetEduType" id="targetEduType" onchange="this.form.submit()" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">
+                <option value="none" th:selected="${selectedEduType == null or selectedEduType == 'none'}">-- All Education Types --</option>
+                <option value="Education" th:selected="${selectedEduType == 'Education'}">School Education</option>
+                <option value="NonSchoolEdu" th:selected="${selectedEduType == 'NonSchoolEdu'}">Non-School Education</option>
+            </select>
+
+            <label for="targetEduLevel">Education Level/Degree:</label>
+            <select name="targetEduLevel" id="targetEduLevel" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none' or selectedEduType == null or selectedEduType == 'none'}">
+                <option value="none" th:selected="${selectedEduLevel == null or selectedEduLevel == 'none'}">-- Select Level/Degree --</option>
+                <!-- Options for School Education -->
+                <th:block th:if="${selectedEduType == 'Education'}" th:each="edu : ${educationLevels}">
+                    <option th:value="${edu.levelID}" th:text="${edu.level}" th:selected="${edu.levelID == selectedEduLevel}"></option>
+                </th:block>
+                <!-- Options for Non-School Education -->
+                <th:block th:if="${selectedEduType == 'NonSchoolEdu'}" th:each="ns : ${nonSchoolLevels}">
+                    <option th:value="${ns.dCID}" th:text="${ns.name}" th:selected="${ns.dCID == selectedEduLevel}"></option>
+                </th:block>
+            </select>
+            </br>
+
+            <p>
+            <em>Filter option has * is required to start Filtering Data</em>
+            </p>
+            <!-- Hidden fields to maintain sort state -->
+            <input type="hidden" name="sortBy" th:value="${sortBy}" />
+            <input type="hidden" name="sortOrder" th:value="${sortOrder}" />
+
+            <!-- Filter button -->
+            <button type="submit" name="action" value="filter" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">Filter</button>
+
+            <!-- Ranking Table (Now visible in both modes) -->
+            <div th:if="${rankingList != null and !rankingList.isEmpty()}">
+                <h2 th:text="${sortOrder == 'asc'} ? 'Top 5 Smallest Populations' : 'Top 5 Largest Populations'"></h2>
+                <table border="1" cellpadding="6" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Ranking</th>
+                            <th th:text="${viewMode == 'summary' or (selectedLGA != null and selectedLGA != 'none')} ? 'Category' : 'LGA'">Sort By</th>
+                            <th>Population</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item, iterStat : ${rankingList}">
+                            <td th:text="${iterStat.count}"></td>
+                            <td th:text="${viewMode == 'summary'} ? ${item.disease} : (${selectedLGA == null or selectedLGA == 'none'} ? ${item.lgaName} : ${item.disease})"></td>
+                            <td th:text="${item.populationValue}"></td>
+                            <td th:text="${totalPopulation > 0} ? ${#numbers.formatDecimal((item.populationValue * 100.0) / totalPopulation, 1, 2)} + '%' : '0.00%'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Results Table -->
+            <div th:if="${eduList != null}">
+                <h2>Education Data</h2>
+                <div th:if="${eduList.isEmpty()}">
+                    <p>No results found for the selected filters.</p>
+                </div>
+                <div th:if="${!eduList.isEmpty()}">
+                    <table border="1" cellpadding="6" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th th:if="${viewMode != 'summary'}">LGA Name</th>
+                                <th th:if="${viewMode != 'summary'}">Sex</th>
+                                <th th:if="${viewMode != 'summary'}">Status</th>
+                                <th>Education Level/Degree</th>
+                                <th>
+                                    Population Value
+                                    </br>
+                                    <button type="submit" name="sortRequest" value="populationValue" class="sort-button">
+                                        <span th:if="${sortBy == 'populationValue' and sortOrder == 'asc'}">Ascending</span>
+                                        <span th:if="${sortBy == 'populationValue' and sortOrder == 'desc'}">Descending</span>
+                                        <span th:if="${sortBy != 'populationValue'}">Default</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    % of Total
+                                    </br>
+                                    <button type="submit" name="sortRequest" value="populationPercentage" class="sort-button">
+                                        <span th:if="${sortBy == 'populationPercentage' and sortOrder == 'asc'}">Ascending</span>
+                                        <span th:if="${sortBy == 'populationPercentage' and sortOrder == 'desc'}">Descending</span>
+                                        <span th:if="${sortBy != 'populationPercentage'}">Default</span>
+                                    </button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="e : ${eduList}">
+                                <td th:if="${viewMode != 'summary'}" th:text="${e.lgaName}"></td>
+                                <td th:if="${viewMode != 'summary'}" th:text="${e.sex}"></td>
+                                <td th:if="${viewMode != 'summary'}" th:text="${e.status}"></td>
+                                <td th:text="${e.disease}"></td>
+                                <td th:text="${e.populationValue}"></td>
+                                <td th:text="${totalPopulation > 0} ? ${#numbers.formatDecimal((e.populationValue * 100.0) / totalPopulation, 1, 2)} + '%' : '0.00%'"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class='footer'>
+        <p>COSC3056 - Studio Project Starter Code</p>
+    </div>
+</body>
+</html>

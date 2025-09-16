@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Changing Gap between Indigenous and Non-Indigenous People from 2016 to 2021</title>
+    <link rel="stylesheet" type="text/css" href="common.css" />
+</head>
+<body>
+    <div class='topnav'>
+        <a href='/'>Homepage</a>
+        <a href='mission.html'>Our Mission</a>
+        <a href='page2A.html'>Age and Health Conditions</a>
+        <a href='page2B.html'>School and Non-School Completion</a>
+        <a href='page3A.html'>Status Gap</a>
+        <a href='page3B.html'>LGA Similarity</a>
+    </div>
+
+    <div class='header'>
+        <h1>Subtask 3.A</h1>
+    </div>
+
+    <div class='content'>
+        <h2>Gap Analysis: 2016 vs 2021</h2>
+        <form method="POST" action="/page3A.html" style="margin-bottom:2em;">
+            <input type="hidden" name="submitAction" id="submitAction" value="" />
+            <label for="dataset">Dataset:</label>
+            <select name="dataset" id="dataset" th:field="*{dataset}">
+                <option value="" th:selected="${dataset == null}">--Select dataset--</option>
+                <option value="Population" th:selected="${dataset == 'Population'}">Population</option>
+                <option value="Health" th:selected="${dataset == 'Health'}">Health</option>
+                <option value="Education" th:selected="${dataset == 'Education'}">School Education</option>
+                <option value="NonSchoolEdu" th:selected="${dataset == 'NonSchoolEdu'}">Non-school Education</option>
+            </select>
+            <!-- Autosubmit for choosing dataset -->
+            <script>
+                function autosubmitForm(el) {
+                    var sa = document.getElementById('submitAction');
+                    if (sa) sa.value = 'update';
+                    el.form.submit();
+                }
+                document.addEventListener('DOMContentLoaded', function() {
+                    var datasetSelect = document.getElementById('dataset');
+                    if (datasetSelect) {
+                        datasetSelect.addEventListener('change', function() {
+                            var sa = document.getElementById('submitAction'); if (sa) sa.value = 'update';
+                            this.form.submit();
+                        });
+                    }
+                });
+            </script>
+            </select>
+            <br/>
+            <label for="status1">Status 1:</label>
+            <select name="status1" id="status1" onchange="autosubmitForm(this)">
+                <option value="" th:selected="${status1 == null}">--Select status--</option>
+                <option th:each="s : ${statusList}" th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${status1 == s.statusID}"></option>
+            </select>
+            <label for="status2">Status 2:</label>
+            <select name="status2" id="status2">
+                <option value="" th:selected="${status2 == null}">--Select status--</option>
+                <option th:each="s : ${statusList}"
+                        th:value="${s.statusID}"
+                        th:text="${s.statusName}"
+                        th:selected="${status2 == s.statusID}"
+                        th:disabled="${status1 != null and s.statusID == status1}"></option>
+            </select>
+            <br/>
+            <label for="sex1">Sex 1:</label>
+            <select name="sex1" id="sex1">
+                <option value="both" th:selected="${sex1 == 'both'}">Both</option>
+                <option th:each="g : ${sexList}" th:value="${g.sexID}" th:text="${g.sex}" th:selected="${sex1 == g.sexID}"></option>
+            </select>
+            <br/>
+            <!-- Population: Age group filter and View by options -->
+            <div th:if="${dataset == 'Population'}">
+                <label for="ageStart">Age Start:</label>
+                <select name="ageStart" id="ageStart" onchange="autosubmitForm(this)">
+                    <option value="" th:selected="${selectedAgeStart == null}">--Select start--</option>
+                    <option th:each="start : ${ageStartList}" th:value="${start}" th:text="${start}" th:selected="${selectedAgeStart == start}"></option>
+                </select>
+                <span th:if="${selectedAgeStart != null && selectedAgeStart == 65}"> (65 and over)</span>
+                <span th:if="${selectedAgeStart != null && selectedAgeStart < 65}">
+                    <label for="ageEnd">Age End:</label>
+                    <select name="ageEnd" id="ageEnd">
+                        <option value="" th:selected="${selectedAgeEnd == null}">--Select end--</option>
+                        <option th:each="end : ${ageEndList}" th:value="${end}" th:text="${end}" th:selected="${selectedAgeEnd == end}"></option>
+                    </select>
+                </span>
+                <!-- View by options: show only if multiple age groups are selected -->
+                <div id="populationViewModeDiv" style="display:none; margin-top:0.5em;">
+                    <label>View by:</label>
+                    <input type="radio" name="populationViewMode" value="byAgeGroups" th:checked="${populationViewMode == null or populationViewMode == 'byAgeGroups'}"/> By Age Groups
+                    <input type="radio" name="populationViewMode" value="byTotal" th:checked="${populationViewMode == 'byTotal'}"/> By Total
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    function updatePopulationViewModeVisibility() {
+                        var ageStart = document.getElementById('ageStart');
+                        var ageEnd = document.getElementById('ageEnd');
+                        var ageStartVal = ageStart ? parseInt(ageStart.value) : null;
+                        var ageEndVal = ageEnd ? parseInt(ageEnd.value) : null;
+                        var ageGroupCount = 0;
+                        if (ageStartVal != null && !isNaN(ageStartVal)) {
+                            if (ageStartVal === 65) {
+                                ageGroupCount = 1;
+                            } else if (ageEndVal != null && !isNaN(ageEndVal) && ageEndVal > ageStartVal) {
+                                // Count number of age groups between start and end (inclusive)
+                                var options = ageEnd.options;
+                                for (var i = 0; i < options.length; i++) {
+                                    var v = parseInt(options[i].value);
+                                    if (!isNaN(v) && v >= ageStartVal && v <= ageEndVal) ageGroupCount++;
+                                }
+                            } else {
+                                ageGroupCount = 1;
+                            }
+                        }
+                        var viewDiv = document.getElementById('populationViewModeDiv');
+                        if (viewDiv) viewDiv.style.display = (ageGroupCount > 1) ? '' : 'none';
+                    }
+                    var ageStart = document.getElementById('ageStart');
+                    var ageEnd = document.getElementById('ageEnd');
+                    if (ageStart) ageStart.addEventListener('change', updatePopulationViewModeVisibility);
+                    if (ageEnd) ageEnd.addEventListener('change', updatePopulationViewModeVisibility);
+                    updatePopulationViewModeVisibility(); // Initial call
+                });
+                </script>
+            </div>
+            <!-- Health: Multi-select health conditions -->
+            <div th:if="${dataset == 'Health'}">
+                <label>Health Conditions:</label>
+                <div th:each="h : ${healthList}">
+                    <input type="checkbox" class="health-checkbox" name="healthIDs" th:value="${h.conditionID}" th:checked="${selectedHealthIDs != null and #lists.contains(selectedHealthIDs, h.conditionID)}" />
+                    <span th:text="${h.diseaseName}"></span>
+                </div>
+                <!-- View by options, always rendered but hidden/shown by JS -->
+                <div id="healthViewModeDiv" style="display:none; margin-top:0.5em;">
+                    <label>View by:</label>
+                    <input type="radio" name="healthViewMode" value="byCondition" th:checked="${healthViewMode == null or healthViewMode == 'byCondition'}"/> By Condition
+                    <input type="radio" name="healthViewMode" value="byTotal" th:checked="${healthViewMode == 'byTotal'}"/> By Total
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    function updateHealthViewModeVisibility() {
+                        var checkboxes = document.querySelectorAll('.health-checkbox');
+                        var checkedCount = 0;
+                        checkboxes.forEach(function(cb) { if (cb.checked) checkedCount++; });
+                        var viewDiv = document.getElementById('healthViewModeDiv');
+                        if (viewDiv) viewDiv.style.display = (checkedCount > 1) ? '' : 'none';
+                    }
+                    var checkboxes = document.querySelectorAll('.health-checkbox');
+                    checkboxes.forEach(function(cb) {
+                        cb.addEventListener('change', updateHealthViewModeVisibility);
+                    });
+                    updateHealthViewModeVisibility(); // Initial call
+                });
+                </script>
+            </div>
+            <!-- Education: Min/Max School Years Dropdowns -->
+            <div th:if="${dataset == 'Education'}">
+                <label for="minSchoolYears">Minimum School Years:</label>
+                <select name="minSchoolYears" id="minSchoolYears" onchange="autosubmitForm(this)">
+                    <option value="" th:selected="${minSchoolYears == null}">--Select Min--</option>
+                    <option th:each="opt : ${minOptions}" th:value="${opt}"
+                        th:text="${opt == 'did_not_go_to_school' ? 'Did not go to school' : opt}"
+                        th:selected="${minSchoolYears == opt}"></option>
+                </select>
+                <span th:if="${minSchoolYears != null and minSchoolYears != 'did_not_go_to_school'}">
+                    <label for="maxSchoolYears">Maximum School Years:</label>
+                    <select name="maxSchoolYears" id="maxSchoolYears">
+                        <option value="" th:selected="${maxSchoolYears == null}">--Select Max--</option>
+                        <option th:each="opt : ${maxOptions}" th:value="${opt}" th:text="${opt}"
+                            th:selected="${maxSchoolYears == opt}"></option>
+                    </select>
+                </span>
+                <!-- Education view mode: always rendered, shown/hidden by JS if multiple levels selected -->
+                <div id="educationViewModeDiv" style="display:none; margin-top:0.5em;">
+                    <label>View by:</label>
+                    <input type="radio" name="educationViewMode" value="byLevels" th:checked="${educationViewMode == null or educationViewMode == 'byLevels'}"/> By Levels
+                    <input type="radio" name="educationViewMode" value="byTotal" th:checked="${educationViewMode == 'byTotal'}"/> By Total
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Get all levelIDs in order from the min/max dropdowns
+                    var eduLevelIDs = [];
+                    var minSel = document.getElementById('minSchoolYears');
+                    var maxSel = document.getElementById('maxSchoolYears');
+                    if (minSel && maxSel) {
+                        // Build ordered list of levelIDs from the min dropdown
+                        for (var i = 0; i < minSel.options.length; i++) {
+                            var v = minSel.options[i].value;
+                            if (v) eduLevelIDs.push(v);
+                        }
+                    }
+                    function getSelectedLevelIDs() {
+                        var minVal = minSel ? minSel.value : null;
+                        var maxVal = maxSel ? maxSel.value : null;
+                        if (!minVal || minVal === '') return [];
+                        if (minVal === 'did_not_go_to_school') return ['did_not_go_to_school'];
+                        var minIdx = eduLevelIDs.indexOf(minVal);
+                        var maxIdx = maxVal && maxVal !== '' ? eduLevelIDs.indexOf(maxVal) : minIdx;
+                        if (minIdx === -1) return [];
+                        if (maxIdx === -1 || maxIdx < minIdx) return [eduLevelIDs[minIdx]];
+                        return eduLevelIDs.slice(minIdx, maxIdx + 1);
+                    }
+                    function updateEducationViewModeVisibility() {
+                        var count = getSelectedLevelIDs().length;
+                        var viewDiv = document.getElementById('educationViewModeDiv');
+                        if (viewDiv) viewDiv.style.display = (count > 1) ? '' : 'none';
+                    }
+                    if (minSel) minSel.addEventListener('change', updateEducationViewModeVisibility);
+                    if (maxSel) maxSel.addEventListener('change', updateEducationViewModeVisibility);
+                    updateEducationViewModeVisibility();
+                });
+                </script>
+            </div>
+            <!-- Non-School: Multi-select with dynamic View by options -->
+            <div th:if="${dataset == 'NonSchoolEdu'}">
+                <label>Non-School Qualifications:</label>
+                <div th:each="n : ${nonSchoolList}">
+                    <input type="checkbox" class="nonschool-checkbox" name="nonSchoolIDs" th:value="${n.DCID}" th:checked="${selectedNonSchoolIDs != null and #lists.contains(selectedNonSchoolIDs, n.DCID)}" />
+                    <span th:text="${n.name}"></span>
+                </div>
+                <!-- View by options, always rendered but hidden/shown by JS -->
+                <div id="nonschoolViewModeDiv" style="display:none; margin-top:0.5em;">
+                    <label>View by:</label>
+                    <input type="radio" name="nonschoolViewMode" value="byDegree" th:checked="${nonschoolViewMode == null or nonschoolViewMode == 'byDegree'}"/> By Degree
+                    <input type="radio" name="nonschoolViewMode" value="byTotal" th:checked="${nonschoolViewMode == 'byTotal'}"/> By Total
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    function updateNonSchoolViewModeVisibility() {
+                        var checkboxes = document.querySelectorAll('.nonschool-checkbox');
+                        var checkedCount = 0;
+                        checkboxes.forEach(function(cb) { if (cb.checked) checkedCount++; });
+                        var viewDiv = document.getElementById('nonschoolViewModeDiv');
+                        if (viewDiv) viewDiv.style.display = (checkedCount > 1) ? '' : 'none';
+                    }
+                    var checkboxes = document.querySelectorAll('.nonschool-checkbox');
+                    checkboxes.forEach(function(cb) {
+                        cb.addEventListener('change', updateNonSchoolViewModeVisibility);
+                    });
+                    updateNonSchoolViewModeVisibility(); // Initial call
+                });
+                </script>
+            </div>
+            <br/>
+            <button type="submit" onclick="document.getElementById('submitAction').value='apply';">Apply</button>
+        </form>
+        <!-- Education Gap Results Table -->
+        <div th:if="${dataset == 'Education'}">
+            <div th:if="${(!educationGapResultsTotal and !educationGapResultsByLevel) and (!educationFiltersComplete || submitAction != 'apply')}">
+                <p style="color:gray;">Please select all filters to view results.</p>
+            </div>
+            <div th:if="${educationFiltersComplete}">
+                <div th:if="${educationGapResultsTotal != null}">
+                    <h3>Education Gap Results (Total)</h3>
+                    <div style="margin-bottom:0.5em; color:#555; font-size:0.95em;">
+                        <b>Note:</b> <span style="color:#b00;">N/A</span> means there is no such LGA data in that year for the selected filters.
+                    </div>
+                    <table border="1" cellpadding="5" style="border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th>LGA</th>
+                                <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                                <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                                <th>Gap 2016</th>
+                                <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                                <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                                <th>Gap 2021</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="r : ${educationGapResultsTotal}">
+                                <td th:text="${r.lga}"></td>
+                                <td>
+                                    <span th:if="${r.status1_2016 != null}" th:text="${r.status1_2016}"></span><span th:if="${r.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.status2_2016 != null}" th:text="${r.status2_2016}"></span><span th:if="${r.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.gap_2016 != null}" th:text="${r.gap_2016}"></span><span th:if="${r.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.status1_2021 != null}" th:text="${r.status1_2021}"></span><span th:if="${r.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.status2_2021 != null}" th:text="${r.status2_2021}"></span><span th:if="${r.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.gap_2021 != null}" th:text="${r.gap_2021}"></span><span th:if="${r.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${educationGapResultsByLevel != null}">
+                    <h3>Education Gap Results (By Level)</h3>
+                    <div style="margin-bottom:0.5em; color:#555; font-size:0.95em;">
+                        <b>Note:</b> <span style="color:#b00;">N/A</span> means there is no such LGA data in that year for the selected filters.
+                    </div>
+                    <table border="1" cellpadding="5" style="border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th>LGA</th>
+                                <th>Level</th>
+                                <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                                <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                                <th>Gap 2016</th>
+                                <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                                <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                                <th>Gap 2021</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="r : ${educationGapResultsByLevel}">
+                                <td th:text="${r.lga}"></td>
+                                <td th:text="${r.level}"></td>
+                                <td>
+                                    <span th:if="${r.status1_2016 != null}" th:text="${r.status1_2016}"></span><span th:if="${r.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.status2_2016 != null}" th:text="${r.status2_2016}"></span><span th:if="${r.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.gap_2016 != null}" th:text="${r.gap_2016}"></span><span th:if="${r.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.status1_2021 != null}" th:text="${r.status1_2021}"></span><span th:if="${r.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.status2_2021 != null}" th:text="${r.status2_2021}"></span><span th:if="${r.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                                <td>
+                                    <span th:if="${r.gap_2021 != null}" th:text="${r.gap_2021}"></span><span th:if="${r.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Population Gap Results Table -->
+        <div th:if="${dataset == 'Population'}">
+            <div th:if="${populationGapResults != null}">
+                <h3>Population Gap Results</h3>
+                <div style="margin-bottom:0.5em; color:#555; font-size:0.95em;">
+                    <b>Note:</b> <span style="color:#b00;">N/A</span> means there is no such LGA data in that year for the selected filters.
+                </div>
+                <!-- Table for view by age groups (show Age Start/End columns) -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${populationViewMode == 'byAgeGroups'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th>Age Start</th>
+                            <th>Age End</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${populationGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td th:text="${row.ageStart}"></td>
+                            <td th:text="${row.ageEnd}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- Table for view by total or single age group (no Age Start/End columns) -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${populationViewMode != 'byAgeGroups'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${populationGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${populationGapResults == null}">
+                <p style="color:gray;">Please select all filters to view results.</p>
+            </div>
+        </div>
+        <!-- Health Gap Results Table -->
+        <div th:if="${dataset == 'Health'}">
+            <div th:if="${healthGapResults != null}">
+                <h3>Health Gap Results</h3>
+                <div style="margin-bottom:0.5em; color:#555; font-size:0.95em;">
+                    <b>Note:</b> <span style="color:#b00;">N/A</span> means there is no such LGA data in that year for the selected filters.
+                </div>
+                <!-- View by condition -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${healthGapResultType == 'byCondition'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th>Disease</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${healthGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td th:text="${row.diseaseName}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- View by total or single condition -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${healthGapResultType == 'total' or healthGapResultType == 'single'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${healthGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${healthGapResults == null}">
+                <p style="color:gray;">Please select all filters to view results.</p>
+            </div>
+        </div>
+
+        <!-- Non-school Education Gap Results Table -->
+        <div th:if="${dataset == 'NonSchoolEdu'}">
+            <div th:if="${nonSchoolGapResults != null}">
+                <h3>Non-school Education Gap Results</h3>
+                <div style="margin-bottom:0.5em; color:#555; font-size:0.95em;">
+                    <b>Note:</b> <span style="color:#b00;">N/A</span> means there is no such LGA data in that year for the selected filters.
+                </div>
+                <!-- View by degree (multi) -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${nonSchoolViewMode == 'degree'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th>Degree</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${nonSchoolGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td th:text="${row.degreeName}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- View by total (single or multi) -->
+                <table border="1" cellpadding="5" style="border-collapse:collapse;" th:if="${nonSchoolViewMode == 'total'}">
+                    <thead>
+                        <tr>
+                            <th>LGA</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2016' : 'Status1 2016'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2016' : 'Status2 2016'}"></th>
+                            <th>Gap 2016</th>
+                            <th th:text="${status1Name != null ? status1Name + ' 2021' : 'Status1 2021'}"></th>
+                            <th th:text="${status2Name != null ? status2Name + ' 2021' : 'Status2 2021'}"></th>
+                            <th>Gap 2021</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${nonSchoolGapResults}">
+                            <td th:text="${row.lga}"></td>
+                            <td><span th:if="${row.status1_2016 != null}" th:text="${row.status1_2016}"></span><span th:if="${row.status1_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2016 != null}" th:text="${row.status2_2016}"></span><span th:if="${row.status2_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2016 != null}" th:text="${row.gap_2016}"></span><span th:if="${row.gap_2016 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status1_2021 != null}" th:text="${row.status1_2021}"></span><span th:if="${row.status1_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.status2_2021 != null}" th:text="${row.status2_2021}"></span><span th:if="${row.status2_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                            <td><span th:if="${row.gap_2021 != null}" th:text="${row.gap_2021}"></span><span th:if="${row.gap_2021 == null}" style="color:#b00;font-style:italic;">N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${nonSchoolGapResults == null}">
+                <p style="color:gray;">Please select all filters to view results.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class='footer'>
+        <p>COSC3056 - Studio Project Starter Code</p>
+    </div>
+</body>
+</html>
