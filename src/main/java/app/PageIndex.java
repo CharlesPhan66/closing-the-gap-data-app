@@ -90,6 +90,6 @@ public class PageIndex implements Handler {
         model.put("outcomes", outcomes);
         
         // Render the template with the model data
-        context.render("index.html", model);
+        context.render(TEMPLATE, model);
     }
 }
