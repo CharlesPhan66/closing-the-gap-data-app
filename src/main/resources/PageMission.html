@@ -207,6 +207,50 @@
                     gap: 25px;
                 }
             }
+
+            /* Mission Banner Style */
+            .mission-banner {
+                background-image: url('OurMissionBanner.png');
+                background-size: cover;
+                background-position: center;
+                color: white;
+                position: relative; /* Needed for the overlay */
+                
+                /* FIX: Use responsive height and flexbox for centering */
+                height: 40vh; /* 40% of the viewport height */
+                min-height: 250px; /* Minimum height to prevent it from being too small */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Add a semi-transparent overlay for better text readability */
+            .mission-banner::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.4);
+                z-index: 1;
+            }
+
+            .mission-banner h1 {
+                margin: 0;
+                font-size: 48px;
+                text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+                position: relative; /* Ensure text is above the overlay */
+                z-index: 2;
+                padding: 0 20px; /* Add padding to prevent text from touching screen edges */
+            }
+
+            /* FIX: Add media query for smaller screens */
+            @media (max-width: 768px) {
+                .mission-banner h1 {
+                    font-size: 36px; /* Reduce font size on smaller screens */
+                }
+            }
         </style>
     </head>
 
@@ -231,9 +275,11 @@
         <a href='page3B.html'>LGA Similarity</a>
     </div>
 
-    <div class="header">
+    <!-- FIX: Replaced the old header div with the new banner div -->
+    <div class="mission-banner">
         <h1>Our Mission</h1>
     </div>
+
     <div class="content">
         <h2>Our Priorities</h2>
         <div class="priorities-section">
