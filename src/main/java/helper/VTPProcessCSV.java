@@ -4,8 +4,8 @@ import java.io.File;
 import java.util.Scanner;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+// import java.sql.ResultSet;
+// import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
@@ -117,6 +117,7 @@ public class VTPProcessCSV {
 
          // Read each line of the CSV
          int row = 1;
+         System.out.println("Processing data rows..." + row);
          while (lineScanner.hasNext()) {
             // Always get scan by line
             String line = lineScanner.nextLine();
@@ -135,6 +136,7 @@ public class VTPProcessCSV {
 
             // Skip lga_name
             String lgaName = rowScanner.next();
+            System.out.println("Processing row " + row + " for LGA: " + lgaCode + " - " + lgaName);
 
             // Fix the year
             int year = 2016;
@@ -178,10 +180,11 @@ public class VTPProcessCSV {
                }
                row++;
             }
+            rowScanner.close();
          }
-
+            lineScanner.close();
       } catch (Exception e) {
          e.printStackTrace();
-      }      
+      }
    }
 }
