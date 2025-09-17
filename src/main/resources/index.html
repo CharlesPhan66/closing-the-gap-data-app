@@ -61,18 +61,30 @@
             </div>
         </section>
 
-        <!-- Hiển thị dân số của Bang và Khu vực địa phương -->
-        <div th:if="${selectedState != null}" style='width:fit-content;margin:32px auto 0;padding:18px 28px;background:#f6f9fb;border-radius:10px;'>
-            <span style='font-size:1.08em;font-weight:600;color:#8e44ad;'>State: </span>
-            <span style='font-size:1.08em;' th:text="${selectedState.name}"></span><br>
-            <span style='color:#555;'>Population (<span th:text="${year}"></span>):</span>
-            <b style='font-size:1.2em;color:#c0392b;' th:text="${#numbers.formatInteger(statePopulation, 0, 'POINT')}"></b>
-            
-            <div th:if="${selectedLGA != null}" style='margin-top:16px;padding:14px 18px;background:#fff;border-radius:8px;border-left:4px solid #2980b9;'>
-                <span style='font-size:1em;font-weight:600;color:#2980b9;'>Local Area: </span>
-                <span style='font-size:1em;' th:text="${selectedLGA.name}"></span><br>
-                <span style='color:#555;'>Population (<span th:text="${year}"></span>):</span>
-                <b style='font-size:1.1em;color:#c0392b;' th:text="${#numbers.formatInteger(selectedLGA.population, 0, 'POINT')}"></b>
+        <!-- Population Info Section -->
+        <div class="population-info-container" th:if="${selectedState != null}">
+            <!-- State Population Card -->
+            <div class="population-card state">
+                <div class="population-card-header">
+                    State
+                    <span class="name state-name" th:text="${selectedState.name}"></span>
+                </div>
+                <div class="population-card-body">
+                    <span class="label">Population (<span th:text="${year}"></span>)</span>
+                    <span th:text="${#numbers.formatInteger(statePopulation, 0, 'POINT')}"></span>
+                </div>
+            </div>
+
+            <!-- LGA Population Card -->
+            <div class="population-card lga" th:if="${selectedLGA != null}">
+                <div class="population-card-header">
+                    Local Area
+                    <span class="name lga-name" th:text="${selectedLGA.name}"></span>
+                </div>
+                <div class="population-card-body">
+                    <span class="label">Population (<span th:text="${year}"></span>)</span>
+                    <span th:text="${#numbers.formatInteger(selectedLGA.population, 0, 'POINT')}"></span>
+                </div>
             </div>
         </div>
 
