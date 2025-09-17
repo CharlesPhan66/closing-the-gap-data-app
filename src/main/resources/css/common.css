@@ -462,3 +462,237 @@ img.top-image {
     margin-bottom: 10px;
 }
 
+/* Population Info Section */
+.population-info-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 30px auto;
+    flex-wrap: wrap;
+}
+
+.population-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 25px;
+    text-align: center;
+    width: 300px;
+    border-top: 5px solid;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.population-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.population-card.state {
+    border-color: #6B705C; /* Olive muted */
+}
+
+.population-card.lga {
+    border-color: #A68A64; /* Clay brown */
+}
+
+.population-card-header {
+    font-size: 18px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.population-card-header .name {
+    font-size: 22px;
+    display: block;
+    margin-top: 5px;
+}
+
+.population-card-header .state-name {
+    color: #6B705C; /* Olive muted */
+}
+
+.population-card-header .lga-name {
+    color: #A68A64; /* Clay brown */
+}
+
+.population-card-body {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2E2E2E; /* Charcoal text */
+    margin-top: 10px;
+}
+
+.population-card-body .label {
+    display: block;
+    font-size: 14px;
+    font-weight: normal;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+/* Styling for form and table pages like PageST2A */
+.filter-section, .results-section {
+    background: #FFFFFF;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    border-left: 4px solid #A68A64;
+}
+
+.filter-section h2, .results-section h2 {
+    margin-top: 0;
+    color: #6B705C;
+    border-bottom: 2px solid #E0DED9;
+    padding-bottom: 10px;
+}
+
+.filter-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    align-items: end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #2E2E2E;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.form-group select, .form-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #D6CBB4;
+    background-color: #FFFFFF;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group select:focus, .form-group input[type="number"]:focus {
+    outline: none;
+    border-color: #A68A64;
+    box-shadow: 0 0 0 2px rgba(166, 138, 100, 0.2);
+}
+
+.form-group.radio-group label {
+    margin-bottom: 12px;
+}
+
+.radio-options {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.radio-options input[type="radio"] {
+    margin-right: 5px;
+}
+
+.filter-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.filter-actions .btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #6B705C;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.filter-actions .btn:hover:not(:disabled) {
+    background-color: #54584A;
+}
+
+.filter-actions .btn:disabled {
+    background-color: #BDBDBD;
+    cursor: not-allowed;
+}
+
+/* Results Table */
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.results-table th, .results-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #E0DED9;
+}
+
+.results-table thead th {
+    background-color: #F8F8F8;
+    font-weight: 600;
+    color: #2E2E2E;
+    border-top: 1px solid #E0DED9;
+    border-bottom: 2px solid #A68A64;
+}
+
+.results-table tbody tr:nth-child(even) {
+    background-color: #F9F9F9;
+}
+
+.results-table tbody tr:hover {
+    background-color: #F1F1F1;
+}
+
+.sort-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: #F9F9F9;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.sort-controls .form-group {
+    margin-bottom: 0;
+}
+
+.sort-controls .btn {
+    padding: 10px 15px;
+    align-self: flex-end;
+}
+
+/* Styles for PageST3A */
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.checkbox-group > div {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.na-value {
+    color: #b00;
+    font-style: italic;
+}
+

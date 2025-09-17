@@ -36,84 +36,102 @@
     </div>
 
     <div class='content'>
-        <form method="POST" action="/page3B.html">
-            <div class="form-grid">
-                <label for="selectedLga">Select an LGA:</label>
-                <select id="selectedLga" name="selectedLga" required>
-                    <option value="">-- Select LGA --</option>
-                    <th:block th:each="lga : ${lgas}">
-                        <!-- FIX: Use .equals() for string comparison in th:selected -->
-                        <option th:value="${lga.code}" th:text="${lga.name}" th:selected="${selectedLga != null and lga.code.equals(selectedLga)}"></option>
-                    </th:block>
-                </select>
+        <div class="filter-section">
+            <h2>Find Similar LGAs</h2>
+            <form method="POST" action="/page3B.html">
+                <div class="filter-form-grid">
+                    <div class="form-group">
+                        <label for="selectedLga">Select an LGA:</label>
+                        <select id="selectedLga" name="selectedLga" required>
+                            <option value="">-- Select LGA --</option>
+                            <th:block th:each="lga : ${lgas}">
+                                <option th:value="${lga.code}" th:text="${lga.name}" th:selected="${selectedLga != null and lga.code.equals(selectedLga)}"></option>
+                            </th:block>
+                        </select>
+                    </div>
 
-                <label for="year">Select Census Year:</label>
-                <select id="year" name="year" required>
-                    <option value="2016" th:selected="${selectedYear == '2016'}">2016</option>
-                    <option value="2021" th:selected="${selectedYear == '2021' or selectedYear == null}">2021</option>
-                </select>
+                    <div class="form-group">
+                        <label for="year">Select Census Year:</label>
+                        <select id="year" name="year" required>
+                            <option value="2016" th:selected="${selectedYear == '2016'}">2016</option>
+                            <option value="2021" th:selected="${selectedYear == '2021' or selectedYear == null}">2021</option>
+                        </select>
+                    </div>
 
-                <label for="outcome">Select Socioeconomic Outcome:</label>
-                <select id="outcome" name="outcome" required onchange="toggleCategory()">
-                    <option value="population" th:selected="${selectedOutcome == 'population'}">Dataset 1: Population</option>
-                    <option value="health" th:selected="${selectedOutcome == 'health'}">Dataset 2: Health Conditions</option>
-                    <option value="education" th:selected="${selectedOutcome == 'education'}">Dataset 3: School Completion</option>
-                    <option value="nonSchool" th:selected="${selectedOutcome == 'nonSchool'}">Dataset 4: Non-school Completion</option>
-                </select>
+                    <div class="form-group">
+                        <label for="outcome">Select Socioeconomic Outcome:</label>
+                        <select id="outcome" name="outcome" required onchange="toggleCategory()">
+                            <option value="population" th:selected="${selectedOutcome == 'population'}">Dataset 1: Population</option>
+                            <option value="health" th:selected="${selectedOutcome == 'health'}">Dataset 2: Health Conditions</option>
+                            <option value="education" th:selected="${selectedOutcome == 'education'}">Dataset 3: School Completion</option>
+                            <option value="nonSchool" th:selected="${selectedOutcome == 'nonSchool'}">Dataset 4: Non-school Completion</option>
+                        </select>
+                    </div>
 
-                <div id="health-category" class="hidden form-grid" style="grid-column: 1 / -1;">
-                    <label for="health-select">Health Condition:</label>
-                    <select id="health-select" name="category">
-                        <option value="none">-- All Conditions --</option>
-                        <th:block th:each="c : ${healthConditions}"><option th:value="${c.conditionID}" th:text="${c.description}" th:selected="${c.conditionID.toString() == selectedCategory}"></option></th:block>
-                    </select>
+                    <div id="health-category" class="hidden form-group">
+                        <label for="health-select">Health Condition:</label>
+                        <select id="health-select" name="category">
+                            <option value="none">-- All Conditions --</option>
+                            <th:block th:each="c : ${healthConditions}"><option th:value="${c.conditionID}" th:text="${c.description}" th:selected="${c.conditionID.toString() == selectedCategory}"></option></th:block>
+                        </select>
+                    </div>
+                    <div id="education-category" class="hidden form-group">
+                        <label for="school-select">School Year:</label>
+                        <select id="school-select" name="category">
+                            <option value="none">-- All Levels --</option>
+                            <th:block th:each="s : ${schoolLevels}"><option th:value="${s.levelID}" th:text="${s.level}" th:selected="${s.levelID.toString() == selectedCategory}"></option></th:block>
+                        </select>
+                    </div>
+                    <div id="nonSchool-category" class="hidden form-group">
+                        <label for="nonSchool-select">Non-school Degree:</label>
+                        <select id="nonSchool-select" name="category">
+                            <option value="none">-- All Degrees --</option>
+                            <th:block th:each="d : ${nonSchoolDegrees}"><option th:value="${d.dCID}" th:text="${d.name}" th:selected="${d.dCID.toString() == selectedCategory}"></option></th:block>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Indigenous Status:</label>
+                        <select id="status" name="status">
+                            <option value="none" th:selected="${selectedStatus == 'none' or selectedStatus == null}">-- Both --</option>
+                            <th:block th:each="s : ${statusList}"><option th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${s.statusID == selectedStatus}"></option></th:block>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Age Range:</label>
+                        <div style="display: flex; gap: 5px; align-items: center;">
+                            <input type="number" id="ageMin" name="ageMin" placeholder="Min Age" min="0" th:value="${selectedAgeMin}" style="width: 100%;">
+                            <span>-</span>
+                            <input type="number" id="ageMax" name="ageMax" placeholder="Max Age" min="0" th:value="${selectedAgeMax}" style="width: 100%;">
+                        </div>
+                         <span id="age-filter-warning" class="hidden annotation" style="color: #b00; margin-top: 5px;">The current dataset does not support Age Filter</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numLgas">Number of similar LGAs to find:</label>
+                        <input type="number" id="numLgas" name="numLgas" min="1" max="20" th:value="${selectedNumLgas != null ? selectedNumLgas : '5'}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sortOrder">Sort by:</label>
+                        <select id="sortOrder" name="sortOrder">
+                            <option value="most_to_least" th:selected="${selectedSortOrder == 'most_to_least' or selectedSortOrder == null}">Most Similar to Least Similar</option>
+                            <option value="least_to_most" th:selected="${selectedSortOrder == 'least_to_most'}">Least Similar to Most Similar</option>
+                        </select>
+                    </div>
                 </div>
-                <div id="education-category" class="hidden form-grid" style="grid-column: 1 / -1;">
-                    <label for="school-select">School Year:</label>
-                    <select id="school-select" name="category">
-                        <option value="none">-- All Levels --</option>
-                        <th:block th:each="s : ${schoolLevels}"><option th:value="${s.levelID}" th:text="${s.level}" th:selected="${s.levelID.toString() == selectedCategory}"></option></th:block>
-                    </select>
+                <div class="filter-actions">
+                    <button type="submit" class="btn">Find Similar LGAs</button>
                 </div>
-                <div id="nonSchool-category" class="hidden form-grid" style="grid-column: 1 / -1;">
-                    <label for="nonSchool-select">Non-school Degree:</label>
-                    <select id="nonSchool-select" name="category">
-                        <option value="none">-- All Degrees --</option>
-                        <th:block th:each="d : ${nonSchoolDegrees}"><option th:value="${d.dCID}" th:text="${d.name}" th:selected="${d.dCID.toString() == selectedCategory}"></option></th:block>
-                    </select>
-                </div>
-
-                <label for="status">Indigenous Status:</label>
-                <select id="status" name="status">
-                    <option value="none" th:selected="${selectedStatus == 'none' or selectedStatus == null}">-- Both --</option>
-                    <th:block th:each="s : ${statusList}"><option th:value="${s.statusID}" th:text="${s.statusName}" th:selected="${s.statusID == selectedStatus}"></option></th:block>
-                </select>
-
-                <label>Age Range:</label>
-                <div>
-                    <input type="number" id="ageMin" name="ageMin" placeholder="Min Age" min="0" th:value="${selectedAgeMin}">
-                    -
-                    <input type="number" id="ageMax" name="ageMax" placeholder="Max Age" min="0" th:value="${selectedAgeMax}">
-                    <span id="age-filter-warning" class="hidden" style="color: rgb(26, 26, 26); font-size: 0.8em; margin-left: 10px;"><em>The current dataset does not support Age Filter</em></span>
-                </div>
-
-                <label for="numLgas">Number of similar LGAs to find:</label>
-                <input type="number" id="numLgas" name="numLgas" min="1" max="20" th:value="${selectedNumLgas != null ? selectedNumLgas : '5'}">
-
-                <label for="sortOrder">Sort by:</label>
-                <select id="sortOrder" name="sortOrder">
-                    <option value="most_to_least" th:selected="${selectedSortOrder == 'most_to_least' or selectedSortOrder == null}">Most Similar to Least Similar</option>
-                    <option value="least_to_most" th:selected="${selectedSortOrder == 'least_to_most'}">Least Similar to Most Similar</option>
-                </select>
-            </div>
-            <button type="submit">Find Similar LGAs</button>
-        </form>
+            </form>
+        </div>
 
         <!-- Results Section -->
-        <div th:if="${results != null and !results.isEmpty()}">
+        <div class="results-section" th:if="${results != null and !results.isEmpty()}">
             
             <!-- Filter Summary Section -->
-            <div th:if="${targetLgaResult != null}" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+            <div th:if="${targetLgaResult != null}" class="filter-summary">
                 <h3>Current Filters</h3>
                 <p>
                     <strong>Year:</strong> <span th:text="${selectedYear}"></span><br/>
@@ -153,11 +171,10 @@
             <!-- First Table: Chosen LGA -->
             <div th:if="${targetLgaResult != null}">
                 <h2>Chosen LGA</h2>
-                <table border="1">
+                <table class="results-table">
                     <thead>
                         <tr>
                             <th>Chosen LGA</th>
-                            <!-- FIX: Changed table header text -->
                             <th>Total LGA population</th>
                         </tr>
                     </thead>
@@ -173,7 +190,7 @@
             <!-- Second Table: Similarity Table -->
             <div th:if="${similarLgas != null and !similarLgas.isEmpty()}">
                 <h2>Similarity Comparison</h2>
-                <table border="1">
+                <table class="results-table">
                     <thead>
                         <tr>
                             <th>Similarity Ranking</th>
@@ -187,12 +204,14 @@
                             <td th:text="${iterStat.count}"></td>
                             <td th:text="${r.lgaName}"></td>
                             <td th:text="${r.population}"></td>
-                            <!-- FIX: Display rawDiff and add a '+' for positive numbers -->
                             <td th:text="${r.rawDiff >= 0 ? '+' : ''} + ${r.rawDiff}"></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+        </div>
+        <div class="results-section" th:if="${results == null or results.isEmpty()}">
+             <p>Please select filters and click "Find Similar LGAs" to see results.</p>
         </div>
     </div>
 
