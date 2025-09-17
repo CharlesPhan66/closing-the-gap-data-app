@@ -429,7 +429,32 @@
         <div class="persona-container" th:if="${persona != null and not #lists.isEmpty(persona) and #lists.size(persona) > 1}" th:with="p=${persona[1]}">
             <div class="persona-image-container">
                 <img src="persona-image.jpg" alt="Persona Image" class="persona-image">
+        <div class="persona-container" th:if="${persona != null and not #lists.isEmpty(persona) and #lists.size(persona) > 1}" th:with="p=${persona[1]}">
+            <div class="persona-image-container">
+                <img src="persona-image.jpg" alt="Persona Image" class="persona-image">
             </div>
+            <div class="persona-details">
+                <div class="persona-quote">
+                    <p>"<span th:text="${p.quote}"></span>"</p>
+                </div>
+                <div class="persona-info-grid">
+                    <div class="persona-info-item">
+                        <h3>Background</h3>
+                        <p th:text="${p.background}"></p>
+                    </div>
+                    <div class="persona-info-item">
+                        <h3>Needs & Goals</h3>
+                        <p th:text="${p.needs_goals}"></p>
+                    </div>
+                    <div class="persona-info-item">
+                        <h3>Pain Points</h3>
+                        <p th:text="${p.pain_points}"></p>
+                    </div>
+                    <div class="persona-info-item">
+                        <h3>Skills & Experience</h3>
+                        <p th:text="${p.skills_experience}"></p>
+                    </div>
+                </div>
             <div class="persona-details">
                 <div class="persona-quote">
                     <p>"<span th:text="${p.quote}"></span>"</p>
@@ -542,5 +567,6 @@
     </script>
     
 </html>
+
 
 
