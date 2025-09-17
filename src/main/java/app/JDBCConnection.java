@@ -1582,78 +1582,99 @@ public class JDBCConnection {
         String year, String lgaCode, String sexID, String statusID, String ageID, String eduType, String eduLevel
     ) {
         ArrayList<Health> eduList = new ArrayList<>();
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(DATABASE);
-            Statement statement = connection.createStatement();
+        
+        // Determine if we need to aggregate by gender
+        boolean aggregateGender = (sexID == null || sexID.equals("none"));
+
+        // Build the query for each education type
+        String schoolQuery = buildEducationQuery("Education", year, lgaCode, sexID, statusID, ageID, eduLevel, aggregateGender);
+        String nonSchoolQuery = buildEducationQuery("NonSchoolEdu", year, lgaCode, sexID, statusID, ageID, eduLevel, aggregateGender);
+
+        try (Connection connection = DriverManager.getConnection(DATABASE);
+             Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);
 
             // Case 1: Only School Education is selected
             if ("Education".equals(eduType)) {
-                String query = buildEducationQuery("Education", year, lgaCode, sexID, statusID, ageID, eduLevel);
-                ResultSet results = statement.executeQuery(query);
+                ResultSet results = statement.executeQuery(schoolQuery);
                 while (results.next()) {
-                    eduList.add(new Health(results.getString("lgaName"), results.getString("sex"), results.getString("status"), results.getString("level"), results.getInt("populationValue")));
+                    eduList.add(new Health(results.getString("lgaName"), results.getString("sex"), results.getString("status"), results.getString("category"), results.getInt("populationValue")));
                 }
             } 
             // Case 2: Only Non-School Education is selected
             else if ("NonSchoolEdu".equals(eduType)) {
-                String query = buildEducationQuery("NonSchoolEdu", year, lgaCode, sexID, statusID, ageID, eduLevel);
-                ResultSet results = statement.executeQuery(query);
+                ResultSet results = statement.executeQuery(nonSchoolQuery);
                 while (results.next()) {
-                    eduList.add(new Health(results.getString("lgaName"), results.getString("sex"), results.getString("status"), results.getString("name"), results.getInt("populationValue")));
+                    eduList.add(new Health(results.getString("lgaName"), results.getString("sex"), results.getString("status"), results.getString("category"), results.getInt("populationValue")));
                 }
             } 
             // Case 3: No Education Type is selected (get both)
             else {
-                // Query for School Education (ignoring eduLevel)
-                String schoolQuery = buildEducationQuery("Education", year, lgaCode, sexID, statusID, ageID, "none");
                 ResultSet schoolResults = statement.executeQuery(schoolQuery);
                 while (schoolResults.next()) {
-                    eduList.add(new Health(schoolResults.getString("lgaName"), schoolResults.getString("sex"), schoolResults.getString("status"), schoolResults.getString("level"), schoolResults.getInt("populationValue")));
+                    eduList.add(new Health(schoolResults.getString("lgaName"), schoolResults.getString("sex"), schoolResults.getString("status"), schoolResults.getString("category"), schoolResults.getInt("populationValue")));
                 }
                 schoolResults.close();
 
-                // Query for Non-School Education (ignoring eduLevel)
-                String nonSchoolQuery = buildEducationQuery("NonSchoolEdu", year, lgaCode, sexID, statusID, ageID, "none");
                 ResultSet nonSchoolResults = statement.executeQuery(nonSchoolQuery);
                 while (nonSchoolResults.next()) {
-                    eduList.add(new Health(nonSchoolResults.getString("lgaName"), nonSchoolResults.getString("sex"), nonSchoolResults.getString("status"), nonSchoolResults.getString("name"), nonSchoolResults.getInt("populationValue")));
+                    eduList.add(new Health(nonSchoolResults.getString("lgaName"), nonSchoolResults.getString("sex"), nonSchoolResults.getString("status"), nonSchoolResults.getString("category"), nonSchoolResults.getInt("populationValue")));
                 }
                 nonSchoolResults.close();
             }
-
-            statement.close();
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                System.err.println(e.getMessage());
-            }
+            System.err.println("Error in getEducationByFilter: " + e.getMessage());
+            e.printStackTrace();
         }
         return eduList;
     }
 
-    private String buildEducationQuery(String eduType, String year, String lgaCode, String sexID, String statusID, String ageID, String eduLevel) {
-        StringBuilder query = new StringBuilder();
-        if ("Education".equals(eduType)) {
-            query.append("SELECT l.lgaName, s.sex, st.status, e.level, ed.populationValue FROM Education ed JOIN LGA l ON ed.lgaCode = l.lgaCode AND ed.year = l.year JOIN Sex s ON ed.sexID = s.sexID JOIN indigStatus st ON ed.statusID = st.statusID JOIN Edu e ON ed.levelID = e.levelID WHERE 1=1");
-            if (eduLevel != null && !eduLevel.equals("none")) query.append(" AND ed.levelID='").append(eduLevel).append("'");
-        } else { // NonSchoolEdu
-            query.append("SELECT l.lgaName, s.sex, st.status, ns.name, nse.populationValue FROM NonSchoolEdu nse JOIN LGA l ON nse.lgaCode = l.lgaCode AND nse.year = l.year JOIN Sex s ON nse.sexID = s.sexID JOIN indigStatus st ON nse.statusID = st.statusID JOIN nonSchool ns ON nse.d_cID = ns.d_cID WHERE 1=1");
-            if (eduLevel != null && !eduLevel.equals("none")) query.append(" AND nse.d_cID='").append(eduLevel).append("'");
+    private String buildEducationQuery(String eduType, String year, String lgaCode, String sexID, String statusID, String ageID, String eduLevel, boolean aggregateGender) {
+        StringBuilder query = new StringBuilder("SELECT ");
+        ArrayList<String> groupByFields = new ArrayList<>();
+
+        // Fields for SELECT and GROUP BY
+        query.append("l.lgaName, st.status, ");
+        groupByFields.add("l.lgaName");
+        groupByFields.add("st.status");
+
+        if (aggregateGender) {
+            query.append("'All' as sex, ");
+        } else {
+            query.append("s.sex, ");
+            groupByFields.add("s.sex");
         }
 
+        if ("Education".equals(eduType)) {
+            query.append("e.level as category, ");
+            groupByFields.add("e.level");
+        } else { // NonSchoolEdu
+            query.append("ns.name as category, ");
+            groupByFields.add("ns.name");
+        }
+
+        query.append("SUM(populationValue) as populationValue ");
+
+        // FROM and JOIN clauses
+        if ("Education".equals(eduType)) {
+            query.append("FROM Education ed JOIN LGA l ON ed.lgaCode = l.lgaCode AND ed.year = l.year JOIN Sex s ON ed.sexID = s.sexID JOIN indigStatus st ON ed.statusID = st.statusID JOIN Edu e ON ed.levelID = e.levelID WHERE 1=1");
+        } else {
+            query.append("FROM NonSchoolEdu nse JOIN LGA l ON nse.lgaCode = l.lgaCode AND nse.year = l.year JOIN Sex s ON nse.sexID = s.sexID JOIN indigStatus st ON nse.statusID = st.statusID JOIN nonSchool ns ON nse.d_cID = ns.d_cID WHERE 1=1");
+        }
+
+        // WHERE conditions
         String tablePrefix = "Education".equals(eduType) ? "ed" : "nse";
+        String levelColumn = "Education".equals(eduType) ? "levelID" : "d_cID";
+
         if (year != null && !year.equals("none")) query.append(" AND ").append(tablePrefix).append(".year='").append(year).append("'");
         if (lgaCode != null && !lgaCode.equals("none")) query.append(" AND ").append(tablePrefix).append(".lgaCode='").append(lgaCode).append("'");
         if (sexID != null && !sexID.equals("none")) query.append(" AND ").append(tablePrefix).append(".sexID='").append(sexID).append("'");
         if (statusID != null && !statusID.equals("none")) query.append(" AND ").append(tablePrefix).append(".statusID='").append(statusID).append("'");
         if (ageID != null && !ageID.equals("none")) query.append(" AND ").append(tablePrefix).append(".ageID='").append(ageID).append("'");
+        if (eduLevel != null && !eduLevel.equals("none")) query.append(" AND ").append(tablePrefix).append(".").append(levelColumn).append("='").append(eduLevel).append("'");
+
+        // GROUP BY clause
+        query.append(" GROUP BY ").append(String.join(", ", groupByFields));
 
         return query.toString();
     }
@@ -1741,6 +1762,7 @@ public class JDBCConnection {
         if (year != null && !year.equals("none")) {
             conditions.append(" AND combined.year = '").append(year).append("'");
         }
+        // FIX: Use stateID from LGA table if lgaCode is 'none'
         if (lgaCode != null && !lgaCode.equals("none")) {
             conditions.append(" AND combined.lgaCode = '").append(lgaCode).append("'");
         }

@@ -103,8 +103,8 @@ public class PageST2B implements Handler {
             // Create a copy of the list for the ranking table
             ArrayList<Health> rankingList = new ArrayList<>(eduList);
 
-            // Determine sort order for the ranking table
-            String rankingSortOrder = (sortOrder != null) ? sortOrder : "desc"; // Default to descending for ranking
+            // Default to descending sort for the ranking table unless ascending is explicitly chosen.
+            String rankingSortOrder = "asc".equals(sortOrder) ? "asc" : "desc";
 
             // If sorting for smallest populations, filter out any with a value of 0
             if ("asc".equals(rankingSortOrder)) {

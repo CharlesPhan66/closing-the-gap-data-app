@@ -46,6 +46,7 @@
     <div class='content'>
         <div class="filter-section">
             <h2>Filters</h2>
+            <!-- FIX: This is now the single main form for the page -->
             <form id="filterForm" method="POST" action="/page2B.html">
                 <div class="filter-form-grid">
                     <div class="form-group radio-group">
@@ -141,94 +142,85 @@
                     <p><em>Fields marked with * are required to filter data.</em></p>
                 </div>
 
+                <!-- FIX: Moved hidden sort inputs into the main form -->
                 <input type="hidden" name="sortBy" th:value="${sortBy}" />
                 <input type="hidden" name="sortOrder" th:value="${sortOrder}" />
 
                 <div class="filter-actions">
                     <button type="submit" name="action" value="filter" class="btn" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">Filter</button>
                 </div>
-            </form>
-        </div>
 
-        <div class="results-section" th:if="${rankingList != null and !rankingList.isEmpty()}">
-            <h2 th:text="${sortOrder == 'asc'} ? 'Top 5 Smallest Populations' : 'Top 5 Largest Populations'"></h2>
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Ranking</th>
-                        <th th:text="${viewMode == 'summary' or (selectedLGA != null and selectedLGA != 'none')} ? 'Category' : 'LGA'">Sort By</th>
-                        <th>Population</th>
-                        <th>Percentage</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="item, iterStat : ${rankingList}">
-                        <td th:text="${iterStat.count}"></td>
-                        <td th:text="${viewMode == 'summary'} ? ${item.disease} : (${selectedLGA == null or selectedLGA == 'none'} ? ${item.lgaName} : ${item.disease})"></td>
-                        <td th:text="${item.populationValue}"></td>
-                        <td th:text="${totalPopulation > 0} ? ${#numbers.formatDecimal((item.populationValue * 100.0) / totalPopulation, 1, 2)} + '%' : '0.00%'"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="results-section" th:if="${eduList != null}">
-            <h2>Education Data</h2>
-            <div th:if="${eduList.isEmpty()}">
-                <p>No results found for the selected filters.</p>
-            </div>
-            <div th:if="${!eduList.isEmpty()}">
-                <form method="POST" action="/page2B.html">
-                    <!-- Pass all filters again for sorting -->
-                    <input type="hidden" name="viewMode" th:value="${viewMode}" />
-                    <input type="hidden" name="targetState" th:value="${selectedState}" />
-                    <input type="hidden" name="targetYear" th:value="${selectedYear}" />
-                    <input type="hidden" name="targetLGA" th:value="${selectedLGA}" />
-                    <input type="hidden" name="targetStatus" th:value="${selectedStatus}" />
-                    <input type="hidden" name="targetAge" th:value="${selectedAge}" />
-                    <input type="hidden" name="targetGender" th:value="${selectedGender}" />
-                    <input type="hidden" name="targetEduType" th:value="${selectedEduType}" />
-                    <input type="hidden" name="targetEduLevel" th:value="${selectedEduLevel}" />
-                    <input type="hidden" name="action" value="filter" />
-
+                <!-- The results tables are now INSIDE the main form -->
+                <div class="results-section" th:if="${rankingList != null and !rankingList.isEmpty()}">
+                    <h2 th:text="${sortOrder == 'asc'} ? 'Top 5 Smallest Populations' : 'Top 5 Largest Populations'"></h2>
                     <table class="results-table">
                         <thead>
                             <tr>
-                                <th th:if="${viewMode != 'summary'}">LGA Name</th>
-                                <th th:if="${viewMode != 'summary'}">Sex</th>
-                                <th th:if="${viewMode != 'summary'}">Status</th>
-                                <th>Education Level/Degree</th>
-                                <th>
-                                    Population
-                                    <button type="submit" name="sortRequest" value="populationValue" class="sort-button">
-                                        <span th:if="${sortBy == 'populationValue' and sortOrder == 'asc'}">▲</span>
-                                        <span th:if="${sortBy == 'populationValue' and sortOrder == 'desc'}">▼</span>
-                                        <span th:if="${sortBy != 'populationValue'}">↕</span>
-                                    </button>
-                                </th>
-                                <th>
-                                    % of Total
-                                    <button type="submit" name="sortRequest" value="populationPercentage" class="sort-button">
-                                        <span th:if="${sortBy == 'populationPercentage' and sortOrder == 'asc'}">▲</span>
-                                        <span th:if="${sortBy == 'populationPercentage' and sortOrder == 'desc'}">▼</span>
-                                        <span th:if="${sortBy != 'populationPercentage'}">↕</span>
-                                    </button>
-                                </th>
+                                <th>Ranking</th>
+                                <th th:text="${viewMode == 'summary' or (selectedLGA != null and selectedLGA != 'none')} ? 'Category' : 'LGA'">Sort By</th>
+                                <th>Population</th>
+                                <th>Percentage</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="e : ${eduList}">
-                                <td th:if="${viewMode != 'summary'}" th:text="${e.lgaName}"></td>
-                                <td th:if="${viewMode != 'summary'}" th:text="${e.sex}"></td>
-                                <td th:if="${viewMode != 'summary'}" th:text="${e.status}"></td>
-                                <td th:text="${e.disease}"></td>
-                                <td th:text="${e.populationValue}"></td>
-                                <td th:text="${totalPopulation > 0} ? ${#numbers.formatDecimal((e.populationValue * 100.0) / totalPopulation, 1, 2)} + '%' : '0.00%'"></td>
+                            <tr th:each="item, iterStat : ${rankingList}">
+                                <td th:text="${iterStat.count}"></td>
+                                <td th:text="${viewMode == 'summary'} ? ${item.disease} : (${selectedLGA == null or selectedLGA == 'none'} ? ${item.lgaName} : ${item.disease})"></td>
+                                <td th:text="${item.populationValue}"></td>
+                                <td th:text="${totalPopulation > 0} ? ${#numbers.formatDecimal((item.populationValue * 100.0) / totalPopulation, 1, 2)} + '%' : '0.00%'"></td>
                             </tr>
                         </tbody>
                     </table>
-                </form>
-            </div>
+                </div>
+
+                <div class="results-section" th:if="${eduList != null}">
+                    <h2>Education Data</h2>
+                    <div th:if="${eduList.isEmpty()}">
+                        <p>No results found for the selected filters.</p>
+                    </div>
+                    <div th:if="${!eduList.isEmpty()}">
+                        <!-- FIX: The second form tag is removed. The table is now part of the main form. -->
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th th:if="${viewMode != 'summary'}">LGA Name</th>
+                                    <th th:if="${viewMode != 'summary'}">Sex</th>
+                                    <th th:if="${viewMode != 'summary'}">Status</th>
+                                    <th>Education Level/Degree</th>
+                                    <th>
+                                        Population
+                                        <!-- This button now submits the main form -->
+                                        <button type="submit" name="sortRequest" value="populationValue" class="sort-button">
+                                            <span th:if="${sortBy == 'populationValue' and sortOrder == 'asc'}">Sort by Ascending</span>
+                                            <span th:if="${sortBy == 'populationValue' and sortOrder == 'desc'}">Sort by Descending</span>
+                                            <span th:if="${sortBy != 'populationValue'}">Default Sort</span>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        % of Total
+                                        <!-- This button now submits the main form -->
+                                        <button type="submit" name="sortRequest" value="populationPercentage" class="sort-button">
+                                            <span th:if="${sortBy == 'populationPercentage' and sortOrder == 'asc'}">Sort by Ascending</span>
+                                            <span th:if="${sortBy == 'populationPercentage' and sortOrder == 'desc'}">Sort by Descending</span>
+                                            <span th:if="${sortBy != 'populationPercentage'}">Default Sort</span>
+                                        </button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="e : ${eduList}">
+                                    <td th:if="${viewMode != 'summary'}" th:text="${e.lgaName}"></td>
+                                    <td th:if="${viewMode != 'summary'}" th:text="${e.sex}"></td>
+                                    <td th:if="${viewMode != 'summary'}" th:text="${e.status}"></td>
+                                    <td th:text="${e.disease}"></td>
+                                    <td th:text="${e.populationValue}"></td>
+                                    <td th:text="${totalPopulation > 0} ? ${#numbers.formatDecimal((e.populationValue * 100.0) / totalPopulation, 1, 2)} + '%' : '0.00%'"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form> <!-- FIX: Main form tag now closes after all content -->
         </div>
     </div>
     <div class='footer'>
