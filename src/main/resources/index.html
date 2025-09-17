@@ -34,8 +34,8 @@
     <div class='content'>
         <section class='hero'>
             <div class='hero-left'>
-                <h2>Narrative about population</h2>
-                <p>Select a year and LGA to view its population.</p>
+                <h2>Closing the Gap</h2>
+                <p>Closing the Gap is about creating real progress for Indigenous Australians. This page gives you a clear snapshot of outcomes and the population across each State and LGA.</p>
             </div>
             <div class='hero-right'>
                 <form method='get' th:action="@{/}">
@@ -80,9 +80,14 @@
         <section class='carousel-wrap'>
             <div class='carousel' id='carousel'>
                 <div class='card' th:each="outcome : ${outcomes}" th:data-index="${outcome.id}" th:classappend="${outcome.id == 1 || outcome.id == 5 ? 'highlight' : ''}">
+                    <!-- show stamp for focused outcomes -->
+                    <img class="focus-stamp" th:if="${outcome.id == 1 || outcome.id == 5}" src="focusStamp.png" alt="Focus stamp" />
                     <h4 class="outcome-title" th:text="${outcome.outcome}"></h4>
                     <div class="outcome-content">
-                        <p th:text="${outcome.target}"></p>
+                        <div class="outcome-text">
+                            <p th:text="${outcome.target}"></p>
+                        </div>
+                        <button class="read-toggle" style="display: none;">Read more</button>
                     </div>
                 </div>
             </div>
@@ -96,7 +101,36 @@
     </div>
 
     <div class='footer'>
-        <p>COSC3056 - Studio Project Starter Code (Sep23)</p>
+        <div class='footer-content'>
+            <div class='footer-section'>
+                <h3>Navigation</h3>
+                <ul>
+                    <li><a href='/'>Overall Population</a></li>
+                    <li><a href='/'>Outcomes</a></li>
+                    <li><a href='mission.html'>Priorities</a></li>
+                    <li><a href='mission.html'>About Us</a></li>
+                    <li><a href='page2A.html'>Health Data Analysis</a></li>
+                    <li><a href='page2B.html'>Education Data Analysis</a></li>
+                    <li><a href='page3A.html'>Gap Analysis</a></li>
+                    <li><a href='page3B.html'>LGA Similarity</a></li>
+                </ul>
+            </div>
+            <div class='footer-section'>
+                <h3>About This Project</h3>
+                <p><span class='highlight'>OpenAI-Sponsored Team</span></p>
+                <p>Student project for Java Studio Programming course addressing social challenges in Australia.</p>
+                <p>Creating transparency and accessibility for Closing the Gap initiative data and progress.</p>
+            </div>
+            <div class='footer-section'>
+                <h3>Contact & Credits</h3>
+                <p><span class='highlight'><a href='https://www.rmit.edu.vn' target='_blank'>RMIT University</a></span></p>
+                <p>COSC3056 - Java Studio Programming</p>
+                <p>Data sources: Australian Bureau of Statistics, Closing the Gap reports</p>
+            </div>
+        </div>
+        <div class='footer-bottom'>
+            <p>&copy; 2024 OpenAI-Sponsored Team | <a href='https://www.rmit.edu.vn' target='_blank'>RMIT University</a></p>
+        </div>
     </div>
 
     <script>
@@ -132,14 +166,95 @@
 
             update();
 
-            const cards = document.querySelectorAll('.card');
+            const cards = Array.from(document.querySelectorAll('.card'));
+
+            function computeAndApplyMaxCardHeight() {
+                // First, temporarily expand all cards to measure their natural expanded heights
+                const cardHeights = [];
+                cards.forEach((c, index) => {
+                    c.classList.add('expanded');
+                    const content = c.querySelector('.outcome-content');
+                    content.classList.add('full-expanded');
+                });
+                // force reflow
+                void document.body.offsetHeight;
+                
+                let maxH = 0;
+                cards.forEach((c, index) => {
+                    const rect = c.getBoundingClientRect();
+                    const naturalHeight = rect.height;
+                    cardHeights[index] = naturalHeight;
+                    maxH = Math.max(maxH, naturalHeight);
+                });
+                
+                // use half the tallest expanded card height as baseline
+                const baselineHeight = maxH / 2;
+                
+                // Now apply constraints and show read more buttons where needed
+                cards.forEach((c, index) => {
+                    c.style.minHeight = baselineHeight + 'px';
+                    const content = c.querySelector('.outcome-content');
+                    content.classList.remove('full-expanded');
+                    content.classList.add('truncated');
+                    
+                    // check if this card needs read more button based on natural height
+                    const naturalHeight = cardHeights[index];
+                    if (naturalHeight > baselineHeight + 20) { // 20px buffer
+                        const readToggle = c.querySelector('.read-toggle');
+                        readToggle.style.display = 'inline-block';
+                    }
+                });
+                // collapse back
+                cards.forEach(c => c.classList.remove('expanded'));
+            }
+
+            // initial computation
+            computeAndApplyMaxCardHeight();
+
+            // debounce helper
+            function debounce(fn, delay) {
+                let t;
+                return function(...args) {
+                    clearTimeout(t);
+                    t = setTimeout(() => fn.apply(this, args), delay);
+                };
+            }
+
+            // recompute on resize
+            window.addEventListener('resize', debounce(() => {
+                // clear inline minHeight before recomputing
+                cards.forEach(c => {
+                    c.style.minHeight = '';
+                    const readToggle = c.querySelector('.read-toggle');
+                    readToggle.style.display = 'none';
+                });
+                computeAndApplyMaxCardHeight();
+            }, 160));
+
+            // hover interactions now toggle expanded class (showing content) while keeping heights stable
             cards.forEach(card => {
-                const content = card.querySelector('.outcome-content');
+                const readToggle = card.querySelector('.read-toggle');
+                const outcomeContent = card.querySelector('.outcome-content');
+                
+                // Read more/less button functionality
+                readToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (outcomeContent.classList.contains('full-expanded')) {
+                        outcomeContent.classList.remove('full-expanded');
+                        outcomeContent.classList.add('truncated');
+                        readToggle.textContent = 'Read more';
+                    } else {
+                        outcomeContent.classList.remove('truncated');
+                        outcomeContent.classList.add('full-expanded');
+                        readToggle.textContent = 'Read less';
+                    }
+                });
+                
                 card.addEventListener('mouseenter', () => {
-                    content.style.display = 'block';
+                    card.classList.add('expanded');
                 });
                 card.addEventListener('mouseleave', () => {
-                    content.style.display = 'none';
+                    card.classList.remove('expanded');
                 });
             });
         });
