@@ -5,64 +5,97 @@
 }
 
 body {
-   font-family: Arial;
-   padding: 10px;
-   background: #f1f1f1;
+   font-family: Arial, sans-serif;
+   background-color: #F5F2E7; /* Beige background */
+   color: #2E2E2E; /* Charcoal text */
+   margin: 0;
+   padding: 0;
 }
 
 /* Header (div) formatting */
 .header {
-   padding: 10px;
+   padding: 20px;
    text-align: center;
-   background-color: #cccccc;
-   color: #000000;
+   background-color: #6B705C; /* Olive muted header */
+   color: #F5F2E7; /* Beige text on header */
 }
 
 .header h1 {
    font-size: 50px;
+   margin: 0;
 }
 
-
 /* Make the logo have a rounded edge */
-img.top-image { height: auto; width: auto; max-height: 90px; }
+img.top-image { 
+   height: auto; 
+   width: auto; 
+   max-height: 90px; 
+}
 
 /* Logo size classes */
-.logo-main { max-height: 72px; margin-right: 12px; }
-.logo-rmit { max-height: 48px; margin-right: 8px; }
+.logo-main { max-height: 60px; margin-right: 12px; }
+.logo-rmit { max-height: 60px; margin-right: 8px; }
+.logo-handshake { max-height: 40px; }
 
-/* CSS Layout from W3Schools: https://www.w3schools.com/css/css_templates.asp */
+.partnership-text {
+    font-size: 0.9em;
+    color: #555;
+    margin: 0 10px;
+    align-self: center;
+}
+
+/* Style the top navigation bar */
 /* Style the top navigation bar */
 .topnav {
-   overflow: hidden;
-   background-color: #333;
- }
- 
- /* Style the topnav links */
- .topnav a {
-   float: left;
-   display: block;
-   color: #f2f2f2;
+   display: flex;
+   background-color: #8D7B68; /* Taupe nav bar */
+   width: 100%;
+}
+
+/* Style the topnav links */
+.topnav a {
+   flex: 1 1 0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   color: #F5F2E7; /* Beige nav text */
    text-align: center;
-   padding: 14px 16px;
+   padding: 14px 0;
    text-decoration: none;
- }
+   min-width: 0;
+   border-right: 1px solid #A68A64;
+}
+.topnav a:last-child {
+   border-right: none;
+}
  
- /* Change color on hover */
- .topnav a:hover {
-   background-color: #ddd;
-   color: black;
- }
+/* Change color on hover */
+.topnav a:hover {
+   background-color: #A68A64; /* Clay brown for hover */
+   color: #FFFFFF;
+}
+
+/* Active link style */
+.topnav a.active {
+    background-color: #E61E2A; /* RMIT Red for active link */
+    color: white;
+}
  
- /* Style the content */
- .content {
-   background-color: #ddd;
-   padding: 10px;
- }
+/* Style the content */
+.content {
+   background-color: #F5F2E7; /* Beige content background */
+   padding: 20px;
+   font-size: 1.1em; /* Increase font size for better readability */
+   line-height: 1.6; /* Improve line spacing */
+}
  
- /* Style the footer */
- .footer {
-   background-color: #cccccc;
-   padding: 10px;
+/* Style the footer */
+.footer {
+   background-color: #6B705C; /* Olive muted footer */
+   color: #F5F2E7; /* Beige text on footer */
+   padding: 20px;
+   text-align: center;
+   margin-top: 20px;
 }
 
 /* Topbar (logo, search, actions) */
@@ -70,7 +103,7 @@ img.top-image { height: auto; width: auto; max-height: 90px; }
    display: flex;
    align-items: center;
    justify-content: space-between;
-   background: #e0e0e0;
+   background: #E0DED9; /* Warm grey topbar */
    padding: 10px 16px;
    gap: 12px;
 }
@@ -80,29 +113,90 @@ img.top-image { height: auto; width: auto; max-height: 90px; }
 }
 
 .home-link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px; }
-.site-title { font-weight: bold; font-size: 28px; letter-spacing: 1px; margin-left: 6px; }
-.search-input { width: 520px; max-width: 45vw; padding: 8px 12px; border-radius: 6px; border: 1px solid #bbb; }
-.btn { padding: 8px 12px; margin-left: 8px; border: none; border-radius: 6px; background: #fff; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-.btn.signin { background: #4CAF50; color: white; }
-.btn.menu { background: #777; color: white; }
+.site-title { font-weight: bold; font-size: 28px; letter-spacing: 1px; margin-left: 6px; color: #2E2E2E; }
+.search-input { 
+    width: 520px; 
+    max-width: 45vw; 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    border: 1px solid #D6CBB4; /* Sand border */
+    background-color: #FFFFFF;
+}
+.btn { 
+    padding: 8px 12px; 
+    margin-left: 8px; 
+    border: none; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+    background-color: #A68A64; /* Clay brown for general buttons */
+    color: #FFFFFF;
+}
+.btn.signin { 
+    background: #E61E2A; /* RMIT Red for sign-in */
+    color: white; 
+}
+.btn.menu { 
+    background: #6B705C; /* Olive muted for menu */
+    color: white; 
+}
 
 /* Hero area: two column */
-.hero { display: flex; gap: 20px; padding: 20px; background: #efefef; margin-top: 16px; }
-.hero-left { flex: 2; background: white; padding: 24px; border-radius: 6px; }
-.hero-right { flex: 1; display: flex; align-items: center; justify-content: center; }
-.graph-placeholder { width: 100%; height: 200px; background: white; border-radius: 6px; display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.hero { 
+    display: flex; 
+    gap: 20px; 
+    padding: 20px; 
+    background: #E0DED9; /* Warm grey for hero section */
+    margin-top: 16px; 
+    border-radius: 8px;
+}
+.hero-left { 
+    flex: 2; 
+    background: #F5F2E7; /* Beige for inner sections */
+    padding: 24px; 
+    border-radius: 6px; 
+}
+.hero-right { 
+    flex: 1; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+.graph-placeholder { 
+    width: 100%; 
+    height: 200px; 
+    background: #FFFFFF; 
+    border-radius: 6px; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+    border: 1px solid #D6CBB4; /* Sand border */
+}
 
 /* LGA list */
 .lga-list { columns: 2; list-style: disc; padding-left: 20px; }
 
 /* Carousel / cards */
-.carousel-wrap { background: #e8e8e8; padding: 18px; margin-top: 20px; border-radius: 6px; }
-.carousel { display: flex; gap: 16px; overflow-x: auto; padding: 8px; }
+.carousel-wrap { 
+    background: #E0DED9; /* Warm grey for carousel wrapper */
+    padding: 18px; 
+    margin-top: 20px; 
+    border-radius: 6px; 
+}
 .carousel { display: flex; gap: 16px; overflow-x: auto; padding: 8px; scroll-behavior: smooth; }
-.card { background: white; flex: 0 0 calc(25% - 16px); min-width: 220px; padding: 16px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card { 
+    background: #FFFFFF; 
+    flex: 0 0 calc(25% - 16px); 
+    min-width: 220px; 
+    padding: 16px; 
+    border-radius: 6px; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+    border: 1px solid #D6CBB4; /* Sand border */
+}
 .carousel-controls { display:flex; justify-content:center; gap:12px; padding-top:12px; }
 
-.carousel-counter { display:flex; align-items:center; gap:8px; font-weight:600; }
+.carousel-counter { display:flex; align-items:center; gap:8px; font-weight:600; color: #2E2E2E; }
 
 @media (max-width: 1000px) {
    .card { flex: 0 0 calc(50% - 16px); }
@@ -116,8 +210,20 @@ img.top-image { height: auto; width: auto; max-height: 90px; }
 .footer.fat { padding: 30px; text-align: center; }
 
 /* Centered larger search row below the topbar */
-.search-row { display:flex; justify-content:center; padding: 12px 16px; background: transparent; }
-.search-input.big { width: 70%; max-width: 900px; padding: 14px 18px; font-size: 18px; border-radius: 8px; }
+.search-row { 
+    display:flex; 
+    justify-content:center; 
+    padding: 12px 16px; 
+    background: transparent; 
+}
+.search-input.big { 
+    width: 70%; 
+    max-width: 900px; 
+    padding: 14px 18px; 
+    font-size: 18px; 
+    border-radius: 8px; 
+    border: 1px solid #D6CBB4; /* Sand border */
+}
 
 @media (max-width: 900px) {
    .search-input.big { width: 90%; }
@@ -128,9 +234,10 @@ img.top-image { height: auto; width: auto; max-height: 90px; }
    font-size: 0.78em;
    font-style: oblique;
    font-weight: 400;
+   color: #6B705C; /* Olive muted */
 }
 .annotation.notice {
-   color: #b35;
+   color: #A68A64; /* Clay brown */
 }
 
 /* Utility helper to hide elements until needed */
