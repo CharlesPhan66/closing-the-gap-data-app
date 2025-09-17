@@ -32,27 +32,37 @@
     </div>
     <div class="content">
         <h2>List of Priorities</h2>
-        <ul>
-            <th:block th:each="priorities : ${priorities}">
-                <li th:text="${priorities.description}"></li>
-            </th:block>
-        </ul>
-        <h2>List of Members</h2>
-        <ul>
-            <th:block th:each="member : ${members}">
-                <li th:text="${member.name + ' (' + member.code + ')'}"></li>
-            </th:block>
-        </ul>
-        <h2>Persona Information</h2>
-        <ul>
-            <th:block th:each="persona, iterStat : ${persona}">
-                <li th:if="${iterStat.index == 1}" th:text="${persona.quote}"></li>
-                <li th:if="${iterStat.index == 1}" th:text="${persona.background}"></li>
-                <li th:if="${iterStat.index == 1}" th:text="${persona.needs_goals}"></li>
-                <li th:if="${iterStat.index == 1}" th:text="${persona.pain_points}"></li>
-                <li th:if="${iterStat.index == 1}" th:text="${persona.skills_experience}"></li>
-            </th:block>
-        </ul>
+        <div class="horizontal-container">
+            <div th:each="priority : ${priorities}" class="themed-card">
+                <p th:text="${priority.description}"></p>
+            </div>
+        </div>
+
+        <h2 style="margin-top: 20px;">List of Members</h2>
+        <div class="horizontal-container">
+            <div th:each="member : ${members}" class="themed-card">
+                <p th:text="${member.name + ' (' + member.code + ')'}"></p>
+            </div>
+        </div>
+
+        <h2 style="margin-top: 20px;">Persona Information</h2>
+        <div class="horizontal-container" th:if="${persona != null and not #lists.isEmpty(persona) and #lists.size(persona) > 1}" th:with="p=${persona[1]}">
+            <div class="themed-card">
+                <p><strong>Quote:</strong> "<span th:text="${p.quote}"></span>"</p>
+            </div>
+            <div class="themed-card">
+                <p><strong>Background:</strong> <span th:text="${p.background}"></span></p>
+            </div>
+            <div class="themed-card">
+                <p><strong>Needs & Goals:</strong> <span th:text="${p.needs_goals}"></span></p>
+            </div>
+            <div class="themed-card">
+                <p><strong>Pain Points:</strong> <span th:text="${p.pain_points}"></span></p>
+            </div>
+            <div class="themed-card">
+                <p><strong>Skills & Experience:</strong> <span th:text="${p.skills_experience}"></span></p>
+            </div>
+        </div>
      </div>
     <div class="footer">
         <p>COSC3056</p>

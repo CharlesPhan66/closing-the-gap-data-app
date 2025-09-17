@@ -152,7 +152,7 @@ img.top-image {
 }
 .hero-left { 
     flex: 2; 
-    background: #F5F2E7; /* Beige for inner sections */
+    background: #a3b18a; /* Beige for inner sections */
     padding: 24px; 
     border-radius: 6px; 
 }
@@ -186,7 +186,7 @@ img.top-image {
 }
 .carousel { display: flex; gap: 16px; overflow-x: auto; padding: 8px; scroll-behavior: smooth; }
 .card { 
-    background: #FFFFFF; 
+    background: #b0c4b1; 
     flex: 0 0 calc(25% - 16px); 
     min-width: 220px; 
     padding: 16px; 
@@ -244,3 +244,59 @@ img.top-image {
 .hidden {
    display: none !important;
 }
+
+.card.highlight {
+    border-color: #E61E2A; /* RMIT Red */
+    animation: pulse 2s infinite;
+    border-width: 2px;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 5px rgba(230, 30, 42, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(230, 30, 42, 1);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(230, 30, 42, 0.7);
+    }
+}
+
+.outcome-title {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+
+.outcome-title:hover {
+    background-color: #f0f0f0;
+}
+
+.outcome-content {
+    display: none;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+
+.horizontal-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.themed-card {
+    background-color: #a3b18a;
+    color: #2E2E2E; /* Charcoal text */
+    padding: 20px;
+    border-radius: 8px;
+    flex: 1 1 200px; /* Flex-grow, flex-shrink, basis */
+    min-width: 200px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+

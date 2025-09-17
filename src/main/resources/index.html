@@ -79,9 +79,11 @@
         <!-- Carousel 17 outcomes - Dữ liệu từ database -->
         <section class='carousel-wrap'>
             <div class='carousel' id='carousel'>
-                <div class='card' th:each="outcome : ${outcomes}" th:data-index="${outcome.id}">
-                    <h4 th:text="${outcome.outcome}"></h4>
-                    <p th:text="${outcome.target}"></p>
+                <div class='card' th:each="outcome : ${outcomes}" th:data-index="${outcome.id}" th:classappend="${outcome.id == 1 || outcome.id == 5 ? 'highlight' : ''}">
+                    <h4 class="outcome-title" th:text="${outcome.outcome}"></h4>
+                    <div class="outcome-content">
+                        <p th:text="${outcome.target}"></p>
+                    </div>
                 </div>
             </div>
             <div class='carousel-controls'>
@@ -129,7 +131,18 @@
             });
 
             update();
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const content = card.querySelector('.outcome-content');
+                card.addEventListener('mouseenter', () => {
+                    content.style.display = 'block';
+                });
+                card.addEventListener('mouseleave', () => {
+                    content.style.display = 'none';
+                });
             });
+        });
     </script>
 </body>
 </html>
