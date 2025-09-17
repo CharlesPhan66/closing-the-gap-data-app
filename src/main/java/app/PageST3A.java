@@ -386,11 +386,13 @@ public class PageST3A implements Handler {
     }
 
 
-    // Render the template with model
+        // DO NOT MODIFY THIS
+        // Makes Javalin render the webpage
     context.render(TEMPLATE, model);
     }
 
     /**
+     * Help function:
      * Given min and max school years (as levelIDs), and the eduList, return the correct list of levelIDs for SQL query.
      * Rules:
      * 1. If min is did_not_go_to_school, return ["did_not_go_to_school"]

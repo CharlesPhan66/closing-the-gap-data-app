@@ -6,12 +6,6 @@ import io.javalin.core.util.RouteOverviewPlugin;
 
 /**
  * Main Application Class.
- * <p>
- * Running this class as regular java application will start the 
- * Javalin HTTP Server and our web application.
- *
- * @author Timothy Wiley, 2023. email: timothy.wiley@rmit.edu.au
- * @author Santha Sumanasekara, 2021. email: santha.sumanasekara@rmit.edu.au
  */
 public class App {
 
@@ -46,7 +40,7 @@ public class App {
         app.get(PageST3B.URL, new PageST3B());
 
         // Add / uncomment POST commands for any pages that need web form POSTS
-        // app.post(PageIndex.URL, new PageIndex());
+        app.post(PageIndex.URL, new PageIndex());
         // app.post(PageMission.URL, new PageMission());
         app.post(PageST2A.URL, new PageST2A());
         app.post(PageST2B.URL, new PageST2B());

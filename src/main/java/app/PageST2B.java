@@ -145,7 +145,8 @@ public class PageST2B implements Handler {
             model.put("totalPopulation", totalPopulation);
             model.put("rankingList", rankingList);
         }
-
+        // DO NOT MODIFY THIS
+        // Makes Javalin render the webpage
         context.render(TEMPLATE, model);
     }
 }

@@ -12,9 +12,6 @@ import java.sql.PreparedStatement; // Add this import
 /**
  * Class for Managing the JDBC Connection to a SQLLite Database.
  * Allows SQL queries to be used with the SQLLite Databse in Java.
- *
- * @author Timothy Wiley, 2023. email: timothy.wiley@rmit.edu.au
- * @author Santha Sumanasekara, 2021. email: santha.sumanasekara@rmit.edu.au
  */
 public class JDBCConnection {
     // Name of database file (contained in database folder)

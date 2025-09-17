@@ -73,6 +73,8 @@ public class PageST3B implements Handler {
         model.put("selectedNumLgas", numLgasStr);
         model.put("selectedSortOrder", sortOrder);
 
+        // DO NOT MODIFY THIS
+        // Makes Javalin render the webpage
         context.render(TEMPLATE, model);
     }
 }

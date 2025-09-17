@@ -64,8 +64,6 @@ public class PageST2A implements Handler {
         model.put("genders", genders);
         model.put("conditions", conditions);
 
-
-         
     // Record the selections that the user made previously
         model.put("selectedYear", chosenYear);
         model.put("selectedLGA", chosenLGA);
@@ -192,7 +190,8 @@ public class PageST2A implements Handler {
     model.put("topN", topN);
     model.put("mode", mode);
 
-
+    // DO NOT MODIFY THIS
+    // Makes Javalin render the webpage
     context.render(TEMPLATE, model);
     }
 
