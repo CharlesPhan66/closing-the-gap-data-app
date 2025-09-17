@@ -87,18 +87,6 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="targetAge">Age Group:</label>
-                        <select name="targetAge" id="targetAge" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">
-                            <option value="none" th:selected="${selectedAge == null or selectedAge == 'none'}">-- Select Age --</option>
-                            <th:block th:each="age : ${ages}">
-                                <option th:value="${age.ageID}"
-                                        th:text="${age.ageStart == 65} ? ${age.ageStart} + ' and over' : ${age.ageStart} + ' - ' + ${age.ageEnd}"
-                                        th:selected="${selectedAge != null and selectedAge != 'none' and age.ageID == selectedAge}"></option>
-                            </th:block>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
                         <label for="targetGender">Gender:</label>
                         <select name="targetGender" id="targetGender" th:disabled="${selectedState == null or selectedState == 'none' or selectedYear == null or selectedYear == 'none'}">
                             <option value="none" th:selected="${selectedGender == null or selectedGender == 'none'}">-- Select Gender --</option>
