@@ -49,16 +49,6 @@
             <!-- FIX: This is now the single main form for the page -->
             <form id="filterForm" method="POST" action="/page2B.html">
                 <div class="filter-form-grid">
-                    <div class="form-group radio-group">
-                        <label>View Mode:</label>
-                        <div class="radio-options">
-                            <input type="radio" id="detailed" name="viewMode" value="detailed" th:checked="${viewMode == 'detailed' or viewMode == null}" onchange="this.form.submit()">
-                            <label for="detailed">Detailed</label>
-                            <input type="radio" id="summary" name="viewMode" value="summary" th:checked="${viewMode == 'summary'}" onchange="this.form.submit()">
-                            <label for="summary">Summary</label>
-                        </div>
-                    </div>
-
                     <div class="form-group">
                         <label for="targetState">State<span style="color: #E61E2A;">*</span>:</label>
                         <select name="targetState" id="targetState" onchange="this.form.submit()">
@@ -175,6 +165,27 @@
 
                 <div class="results-section" th:if="${eduList != null}">
                     <h2>Education Data</h2>
+                    
+                    <!-- View Mode selector - shown only when data is available -->
+                    <div th:if="${!eduList.isEmpty()}" style="margin-bottom: 15px;">
+                        <form id="viewModeForm" method="POST" action="/page2B.html" style="display: inline-block;">
+                            <input type="hidden" name="targetState" th:value="${selectedState}" />
+                            <input type="hidden" name="targetYear" th:value="${selectedYear}" />
+                            <input type="hidden" name="targetLGA" th:value="${selectedLGA}" />
+                            <input type="hidden" name="targetGender" th:value="${selectedGender}" />
+                            <input type="hidden" name="targetStatus" th:value="${selectedStatus}" />
+                            <div class="form-group radio-group" style="display: inline-block; margin-bottom: 0;">
+                                <label style="margin-right: 10px;"><b>View Mode:</b></label>
+                                <div class="radio-options" style="display: inline-block;">
+                                    <input type="radio" id="detailed" name="viewMode" value="detailed" th:checked="${viewMode == 'detailed' or viewMode == null}" onchange="document.getElementById('viewModeForm').submit();">
+                                    <label for="detailed" style="margin-right: 15px;">Detailed</label>
+                                    <input type="radio" id="summary" name="viewMode" value="summary" th:checked="${viewMode == 'summary'}" onchange="document.getElementById('viewModeForm').submit();">
+                                    <label for="summary">Summary</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
                     <div th:if="${eduList.isEmpty()}">
                         <p>No results found for the selected filters.</p>
                     </div>
