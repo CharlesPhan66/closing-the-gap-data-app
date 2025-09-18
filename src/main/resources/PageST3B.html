@@ -21,8 +21,9 @@
             font-size: 48px;
         }
 
-        .form-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; max-width: 800px; }
-        .form-grid label { font-weight: bold; text-align: right; }
+        /* FIX: Changed align-items from 'center' to 'start' */
+        .form-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; max-width: 800px; }
+        .form-grid label { font-weight: bold; text-align: right; padding-top: 6px; /* Add padding to vertically align with input text */}
         .hidden { display: none; }
     </style>
 </head>
@@ -116,12 +117,15 @@
 
                     <div class="form-group">
                         <label>Age Range:</label>
-                        <div style="display: flex; gap: 5px; align-items: center;">
-                            <input type="number" id="ageMin" name="ageMin" placeholder="Min Age" min="0" th:value="${selectedAgeMin}" style="width: 100%;">
-                            <span>-</span>
-                            <input type="number" id="ageMax" name="ageMax" placeholder="Max Age" min="0" th:value="${selectedAgeMax}" style="width: 100%;">
+                        <!-- FIX: Add a wrapper div to contain both inputs and the warning message -->
+                        <div>
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <input type="number" id="ageMin" name="ageMin" placeholder="Min Age" min="0" th:value="${selectedAgeMin}" style="width: 100%;">
+                                <span>-</span>
+                                <input type="number" id="ageMax" name="ageMax" placeholder="Max Age" min="0" th:value="${selectedAgeMax}" style="width: 100%;">
+                            </div>
+                            <!-- FIX: Removed the warning message div -->
                         </div>
-                         <span id="age-filter-warning" class="hidden annotation" style="color: #b00; margin-top: 5px;">The current dataset does not support Age Filter</span>
                     </div>
 
                     <div class="form-group">
@@ -241,7 +245,7 @@
             // Get references to age filter elements
             const ageMinInput = document.getElementById('ageMin');
             const ageMaxInput = document.getElementById('ageMax');
-            const ageWarning = document.getElementById('age-filter-warning');
+            // FIX: Removed reference to the warning message element
 
             // --- Category Toggling Logic (existing) ---
             healthDiv.classList.add('hidden');
@@ -265,15 +269,13 @@
 
             // --- New Age Filter Logic ---
             if (outcome === 'health' || outcome === 'education' || outcome === 'nonSchool') {
-                // Disable age inputs and show warning
+                // Disable age inputs
                 ageMinInput.disabled = true;
                 ageMaxInput.disabled = true;
-                ageWarning.classList.remove('hidden');
             } else {
-                // Enable age inputs and hide warning for 'population' dataset
+                // Enable age inputs for 'population' dataset
                 ageMinInput.disabled = false;
                 ageMaxInput.disabled = false;
-                ageWarning.classList.add('hidden');
             }
         }
         window.onload = toggleCategory;

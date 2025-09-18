@@ -60,7 +60,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="targetState">State*:</label>
+                        <label for="targetState">State<span style="color: #E61E2A;">*</span>:</label>
                         <select name="targetState" id="targetState" onchange="this.form.submit()">
                             <option value="none" th:selected="${selectedState == null or selectedState == 'none'}">-- Select State --</option>
                             <th:block th:each="state : ${states}">
@@ -72,7 +72,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="targetYear">Year*:</label>
+                        <label for="targetYear">Year<span style="color: #E61E2A;">*</span>:</label>
                         <select name="targetYear" id="targetYear" onchange="this.form.submit()">
                             <option value="none" th:selected="${selectedYear == null or selectedYear == 'none'}">-- Select Year --</option>
                             <option value="2021" th:selected="${selectedYear == '2021'}">2021</option>
@@ -139,7 +139,7 @@
                 </div>
 
                 <div class="annotation" style="margin: 1em 0;">
-                    <p><em>Fields marked with * are required to filter data.</em></p>
+                    <p><em>Fields marked with <span style="color: #E61E2A;">*</span> are required to filter data.</em></p>
                 </div>
 
                 <!-- FIX: Moved hidden sort inputs into the main form -->
