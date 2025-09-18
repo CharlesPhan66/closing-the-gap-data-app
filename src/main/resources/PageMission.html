@@ -238,6 +238,18 @@
 
             .persona-image-container {
                 flex: 0 0 250px;
+                cursor: pointer;
+                border: 4px solid #A68A64;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                align-self: flex-start; /* Align to the top */
+            }
+
+            .persona-image-container:hover {
+                transform: scale(1.03);
+                box-shadow: 0 6px 16px rgba(0,0,0,0.25);
             }
 
             .persona-image {
@@ -264,6 +276,15 @@
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 20px;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+                opacity: 0;
+            }
+
+            .persona-container.details-visible .persona-info-grid {
+                max-height: 1000px; /* Adjust as needed to fit content */
+                opacity: 1;
             }
 
             .persona-info-item h3 {
@@ -286,6 +307,7 @@
                 }
                 .persona-image-container {
                     max-height: 300px;
+                    align-self: center;
                 }
                 .persona-info-grid {
                     grid-template-columns: 1fr;
@@ -396,8 +418,8 @@
         </div>
 
         <h2 style="margin-top: 20px;">Persona Information</h2>
-        <div class="persona-container" th:if="${persona != null and not #lists.isEmpty(persona) and #lists.size(persona) > 1}" th:with="p=${persona[1]}">
-            <div class="persona-image-container">
+        <div class="persona-container" id="persona-container" th:if="${persona != null and not #lists.isEmpty(persona) and #lists.size(persona) > 1}" th:with="p=${persona[1]}">
+            <div class="persona-image-container" id="persona-image-container">
                 <img src="persona-image.jpg" alt="Persona Image" class="persona-image">
             </div>
             <div class="persona-details">
@@ -508,6 +530,15 @@
                     resetDescription();
                 });
             });
+
+            // Persona toggle logic
+            const personaContainer = document.getElementById('persona-container');
+            const personaImage = document.getElementById('persona-image-container');
+            if (personaImage) {
+                personaImage.addEventListener('click', function() {
+                    personaContainer.classList.toggle('details-visible');
+                });
+            }
         });
     </script>
     
