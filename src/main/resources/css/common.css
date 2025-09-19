@@ -761,3 +761,142 @@ img.top-image {
     transform: translateY(0);
 }
 
+/* Enhanced Form Styling */
+select, input[type="text"], input[type="number"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #ffffff;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #333;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+select:focus, input[type="text"]:focus, input[type="number"]:focus {
+    outline: none;
+    border-color: #2C5234;
+    box-shadow: 0 0 0 3px rgba(44, 82, 52, 0.1), 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+select:hover, input[type="text"]:hover, input[type="number"]:hover {
+    border-color: #2C5234;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+/* Custom dropdown arrow for select elements */
+select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+select:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    border-color: #e9ecef;
+}
+
+/* Enhanced button styling */
+.btn, button[type="submit"], input[type="submit"] {
+    background: linear-gradient(135deg, #2C5234 0%, #1A3A20 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(44, 82, 52, 0.3);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:hover, button[type="submit"]:hover, input[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 82, 52, 0.4);
+    background: linear-gradient(135deg, #1A3A20 0%, #0F2A16 100%);
+}
+
+.btn:active, button[type="submit"]:active, input[type="submit"]:active {
+    transform: translateY(0);
+}
+
+.btn:disabled, button[type="submit"]:disabled, input[type="submit"]:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Form group styling */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+/* Radio button styling */
+input[type="radio"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e1e5e9;
+    border-radius: 50%;
+    margin-right: 8px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type="radio"]:checked {
+    border-color: #2C5234;
+    background-color: #2C5234;
+}
+
+input[type="radio"]:checked::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+input[type="radio"]:hover {
+    border-color: #2C5234;
+}
+
+/* Enhanced container styling */
+.filter-section, .results-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border: 1px solid #f0f0f0;
+}
+
