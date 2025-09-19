@@ -319,5 +319,28 @@
             <p>&copy; 2024 OpenAI-Sponsored Team | <a href='https://www.rmit.edu.vn' target='_blank'>RMIT University</a></p>
         </div>
     </div>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" title="Back to Top">&uarr;</button>
+
+    <script>
+        // Scroll to Top functionality
+        const scrollToTopButton = document.getElementById('scrollToTop');
+        
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollToTopButton.classList.add('show');
+            } else {
+                scrollToTopButton.classList.remove('show');
+            }
+        });
+        
+        scrollToTopButton.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    </script>
 </body>
 </html>
