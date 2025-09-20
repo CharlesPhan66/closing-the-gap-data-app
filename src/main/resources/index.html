@@ -346,6 +346,27 @@
                 behavior: 'smooth'
             });
         });
+
+        // Preserve scroll position on form auto-submit
+        window.addEventListener('load', function() {
+            // Restore scroll position if saved
+            const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+            if (savedScrollPosition) {
+                window.scrollTo(0, parseInt(savedScrollPosition));
+                sessionStorage.removeItem('scrollPosition');
+            }
+        });
+
+        // Save scroll position before form submission for auto-submit dropdowns
+        const autoSubmitDropdowns = ['stateId', 'lgaCode', 'year'];
+        autoSubmitDropdowns.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', function() {
+                    sessionStorage.setItem('scrollPosition', window.pageYOffset);
+                });
+            }
+        });
     </script>
 </body>
 </html>

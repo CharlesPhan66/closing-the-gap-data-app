@@ -627,6 +627,49 @@
                 behavior: 'smooth'
             });
         });
+
+        // Preserve scroll position on form auto-submit
+        window.addEventListener('load', function() {
+            // Restore scroll position if saved
+            const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+            if (savedScrollPosition) {
+                window.scrollTo(0, parseInt(savedScrollPosition));
+                sessionStorage.removeItem('scrollPosition');
+            }
+        });
+
+        // Save scroll position before form submission for auto-submit elements
+        // Handle dataset dropdown that has JavaScript event listener
+        const datasetSelect = document.getElementById('dataset');
+        if (datasetSelect) {
+            datasetSelect.addEventListener('change', function() {
+                sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            });
+        }
+
+        // Handle other elements with onchange attributes that call autosubmitForm
+        const autoSubmitElements = document.querySelectorAll('select[onchange*="autosubmitForm"]');
+        autoSubmitElements.forEach(element => {
+            element.addEventListener('change', function() {
+                sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            });
+        });
+
+        // Save scroll position before manual form submissions (Compare button)
+        const manualSubmitButtons = document.querySelectorAll('button[type="submit"]');
+        manualSubmitButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            });
+        });
+
+        // Also handle form submissions directly
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function() {
+                sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            });
+        });
     </script>
 </body>
 </html>

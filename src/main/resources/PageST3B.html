@@ -341,6 +341,45 @@
                 behavior: 'smooth'
             });
         });
+
+        // Preserve scroll position on form auto-submit
+        window.addEventListener('load', function() {
+            // Restore scroll position if saved
+            const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+            if (savedScrollPosition) {
+                window.scrollTo(0, parseInt(savedScrollPosition));
+                sessionStorage.removeItem('scrollPosition');
+            }
+        });
+
+        // Save scroll position before form submission for any auto-submit elements
+        // Currently PageST3B appears to have only manual form submission
+        // This code is ready for any future auto-submit functionality
+        const autoSubmitElements = document.querySelectorAll('select[onchange], input[onchange]');
+        autoSubmitElements.forEach(element => {
+            const onchangeValue = element.getAttribute('onchange');
+            if (onchangeValue && (onchangeValue.includes('submit') || onchangeValue.includes('autosubmitForm'))) {
+                element.addEventListener('change', function() {
+                    sessionStorage.setItem('scrollPosition', window.pageYOffset);
+                });
+            }
+        });
+
+        // Save scroll position before manual form submissions (Find Similar LGAs button)
+        const manualSubmitButtons = document.querySelectorAll('button[type="submit"]');
+        manualSubmitButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            });
+        });
+
+        // Also handle form submissions directly
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function() {
+                sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            });
+        });
     </script>
 </body>
 </html>
