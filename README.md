@@ -43,7 +43,7 @@ Folders:
 ├── /target                      - build directory (DO NOT MODIFY)
 ├── /database                    - The folder to store sqlite database files (*.db files), SQL script (*.sql), and other files related to the database
 ├── pom.xml                      - Configure Build (DO NOT MODIFY)
-└── README.md                    - This file ;)
+└── README.md                    - This file (DO NOT MODIFY)
 ```
 
 Current Libraries:
